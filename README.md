@@ -33,6 +33,7 @@ recursively). Files mirror to `<repo>/config/<tool>/<rel>`.
 
 | Command           | Action                                            |
 | ----------------- | ------------------------------------------------- |
+| `dotfiles init`   | Scaffold a fresh dotfiles repository.             |
 | `dotfiles save`   | Copy local files into the dotfiles repository.    |
 | `dotfiles apply`  | Copy repository files into the local environment. |
 | `dotfiles status` | Print files that are out of sync.                 |

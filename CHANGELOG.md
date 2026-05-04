@@ -4,6 +4,7 @@
 
 ### Added
 
+- `dotfiles init` command that scaffolds a fresh dotfiles repository: creates the target directory, an empty `dotfiles.json`, a short `README.md` written for the dotfiles user, and runs `git init`. Honors `--dry-run`, `--json`, `--verbose`; pass `--force` to overwrite existing `dotfiles.json` / `README.md`.
 - Initial Go implementation of the dotfiles CLI with `save`, `apply`, `status`, and `config` commands.
 - Cobra-based command surface with `--dry-run`, `--verbose`, and `--prune` flags.
 - Sample dotfiles in `testdata/sample-repo` for tests and demonstration.

@@ -39,6 +39,7 @@ func resetFlags() {
 	jsonOutput = false
 	filterTool = ""
 	filterFiles = nil
+	forceInit = false
 	resetCobraFlagState(rootCmd)
 }
 
