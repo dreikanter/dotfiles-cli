@@ -23,7 +23,7 @@ const statusExamples = `  dotfiles status --tool git
 
 var statusCmd = &cobra.Command{
 	Use:   "status",
-	Short: "Show out-of-sync files",
+	Short: "Show the tracked files status",
 	Long: `Show files whose live copy and saved repository copy disagree.
 
 Plain text lists only out-of-sync entries. JSON includes every entry.
