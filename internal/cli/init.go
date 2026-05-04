@@ -125,10 +125,10 @@ func runInit(cmd *cobra.Command) error {
 	gitDir := filepath.Join(root, ".git")
 
 	if !forceInit {
-		if st, err := os.Stat(manifestFile); err == nil && !st.IsDir() {
+		if existsFile(manifestFile) {
 			return handleErr(cmd, fmt.Errorf("%s already exists; pass --force to overwrite", manifestFile))
 		}
-		if st, err := os.Stat(readmeFile); err == nil && !st.IsDir() {
+		if existsFile(readmeFile) {
 			return handleErr(cmd, fmt.Errorf("%s already exists; pass --force to overwrite", readmeFile))
 		}
 	}
@@ -188,8 +188,7 @@ func runInit(cmd *cobra.Command) error {
 }
 
 func writeInitFile(path, content string, dryRun, force bool, logOut io.Writer) (initAction, error) {
-	st, err := os.Stat(path)
-	exists := err == nil && !st.IsDir()
+	exists := existsFile(path)
 	switch {
 	case exists && !force:
 		fmt.Fprintf(logOut, "skip %s\n", path)
@@ -233,4 +232,9 @@ func initGit(gitPath, root, gitDir string, dryRun bool, logOut io.Writer) (initA
 		return initAction{}, fmt.Errorf("git init %s: %w", root, err)
 	}
 	return initAction{Action: "git-init", Path: gitDir}, nil
+}
+
+func existsFile(p string) bool {
+	st, err := os.Stat(p)
+	return err == nil && !st.IsDir()
 }
