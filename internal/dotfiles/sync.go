@@ -27,11 +27,22 @@ type Options struct {
 	Out     io.Writer
 }
 
+// Action records a single per-file effect of a Sync run for machine-readable
+// output. Action is one of "copy", "prune", or "error".
+type Action struct {
+	Action  string `json:"action"`
+	From    string `json:"from,omitempty"`
+	To      string `json:"to,omitempty"`
+	Path    string `json:"path,omitempty"`
+	Message string `json:"message,omitempty"`
+}
+
 // Result summarizes a Sync run.
 type Result struct {
 	Copied  int
 	Removed int
 	Errors  int
+	Actions []Action
 }
 
 // Sync copies files for the given specs in the chosen direction. When Prune is
@@ -45,7 +56,7 @@ func Sync(specs []Spec, dir Direction, opts Options) (Result, error) {
 	if err != nil {
 		return Result{}, err
 	}
-	var res Result
+	res := Result{Actions: []Action{}}
 	for _, e := range entries {
 		src, dst := e.Local, e.Dotfile
 		if dir == DirApply {
@@ -53,20 +64,23 @@ func Sync(specs []Spec, dir Direction, opts Options) (Result, error) {
 		}
 		if err := copyOne(src, dst, opts); err != nil {
 			res.Errors++
+			res.Actions = append(res.Actions, Action{Action: "error", From: src, To: dst, Message: err.Error()})
 			fmt.Fprintf(opts.Out, "Error %s -> %s: %v\n", src, dst, err)
 			continue
 		}
 		res.Copied++
+		res.Actions = append(res.Actions, Action{Action: "copy", From: src, To: dst})
 		if opts.Verbose {
 			fmt.Fprintf(opts.Out, "OK %s -> %s\n", src, dst)
 		}
 	}
 	if opts.Prune {
-		removed, err := prune(specs, dir, opts)
+		removed, actions, err := prune(specs, dir, opts)
 		if err != nil {
 			return res, err
 		}
 		res.Removed = removed
+		res.Actions = append(res.Actions, actions...)
 	}
 	return res, nil
 }
@@ -115,15 +129,16 @@ func copyOne(src, dst string, opts Options) error {
 
 // prune removes files under destination roots that are not declared by the
 // manifest. Pruning only walks directory specs.
-func prune(specs []Spec, dir Direction, opts Options) (int, error) {
+func prune(specs []Spec, dir Direction, opts Options) (int, []Action, error) {
 	expected, dirs := destinationSet(specs, dir)
 	removed := 0
+	actions := []Action{}
 	for _, root := range dirs {
 		if _, err := os.Stat(root); err != nil {
 			if os.IsNotExist(err) {
 				continue
 			}
-			return removed, err
+			return removed, actions, err
 		}
 		err := filepath.WalkDir(root, func(p string, d fs.DirEntry, err error) error {
 			if err != nil {
@@ -140,19 +155,21 @@ func prune(specs []Spec, dir Direction, opts Options) (int, error) {
 			}
 			if opts.DryRun {
 				removed++
+				actions = append(actions, Action{Action: "prune", Path: p})
 				return nil
 			}
 			if rmErr := os.Remove(p); rmErr != nil {
 				return rmErr
 			}
 			removed++
+			actions = append(actions, Action{Action: "prune", Path: p})
 			return nil
 		})
 		if err != nil && !errors.Is(err, fs.ErrNotExist) {
-			return removed, err
+			return removed, actions, err
 		}
 	}
-	return removed, nil
+	return removed, actions, nil
 }
 
 // destinationSet returns (expected destination file paths, destination dir

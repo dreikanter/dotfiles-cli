@@ -1,43 +1,62 @@
 package cli
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/dreikanter/dotfiles-cli/internal/dotfiles"
 	"github.com/spf13/cobra"
 )
 
-var statusJSON bool
+type statusResponse struct {
+	Entries []dotfiles.StatusEntry `json:"entries"`
+	Summary statusSummary          `json:"summary"`
+}
+
+type statusSummary struct {
+	Total    int `json:"total"`
+	Unsynced int `json:"unsynced"`
+}
 
 var statusCmd = &cobra.Command{
 	Use:     "status",
 	Aliases: []string{"ls"},
 	Short:   "Show out-of-sync files",
+	Long: `Show files whose local copy and dotfile mirror disagree.
+
+Plain text lists only out-of-sync entries. JSON includes every entry.
+
+JSON output shape:
+
+  {
+    "entries": [{"tool", "local", "dotfile", "state"}, ...],
+    "summary": {"total": N, "unsynced": N}
+  }`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		specs, err := loadSpecs()
 		if err != nil {
-			return err
+			return handleErr(cmd, err)
 		}
 		entries, err := dotfiles.Status(specs)
 		if err != nil {
-			return err
+			return handleErr(cmd, err)
+		}
+		unsynced := 0
+		for _, e := range entries {
+			if e.State != dotfiles.StateInSync {
+				unsynced++
+			}
 		}
 		out := cmd.OutOrStdout()
-		if statusJSON {
-			b, err := json.MarshalIndent(entries, "", "  ")
-			if err != nil {
-				return err
-			}
-			fmt.Fprintln(out, string(b))
-			return nil
+		if jsonOutput {
+			return writeJSON(out, statusResponse{
+				Entries: entries,
+				Summary: statusSummary{Total: len(entries), Unsynced: unsynced},
+			})
 		}
-		var unsynced int
 		for _, e := range entries {
 			if e.State == dotfiles.StateInSync {
 				continue
 			}
-			unsynced++
 			fmt.Fprintf(out, "%-20s %s\n", e.State, e.Local)
 		}
 		if unsynced == 0 {
@@ -50,6 +69,5 @@ var statusCmd = &cobra.Command{
 }
 
 func init() {
-	statusCmd.Flags().BoolVar(&statusJSON, "json", false, "emit machine-readable JSON")
 	rootCmd.AddCommand(statusCmd)
 }

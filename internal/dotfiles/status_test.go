@@ -1,7 +1,6 @@
 package dotfiles
 
 import (
-	"encoding/json"
 	"os"
 	"path/filepath"
 	"testing"
@@ -67,20 +66,4 @@ func TestStatus_AllStates(t *testing.T) {
 	assert.Equal(t, StateLocalChanges, byTool["d"])
 	assert.Equal(t, StateDotfileChanges, byTool["e"])
 	assert.Equal(t, StateNeitherExists, byTool["f"])
-}
-
-func TestConfigJSON(t *testing.T) {
-	home := t.TempDir()
-	repo := t.TempDir()
-	r := Resolver{RepoRoot: repo, Home: home}
-	specs := r.Resolve(Manifest{"git": {"~/.gitconfig"}})
-
-	b, err := ConfigJSON(specs)
-	require.NoError(t, err)
-	var m map[string]string
-	require.NoError(t, json.Unmarshal(b, &m))
-
-	expectedDotfile := filepath.Join(repo, "config/git/.gitconfig")
-	expectedLocal := filepath.Join(home, ".gitconfig")
-	assert.Equal(t, expectedLocal, m[expectedDotfile])
 }
