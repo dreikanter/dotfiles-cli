@@ -16,8 +16,14 @@ sure that directory is on your `PATH`.
 Go (1.25+) is a prerequisite for installing the CLI.
 
 Run `dotfiles init` to scaffold a new dotfiles repository (default
-`~/.dotfiles`). It creates the directory, writes an empty `dotfiles.json`
-manifest and a starter `README.md`, then runs `git init`.
+`~/.dotfiles`):
+
+```sh
+dotfiles init
+```
+
+It creates the directory, writes an empty `dotfiles.json` manifest and a
+starter `README.md`, then runs `git init`.
 
 The repository is a checked-in mirror of the live config files on your
 machine. The manifest (`dotfiles.json`) maps tool names to lists of paths and
