@@ -2,6 +2,7 @@ package dotfiles
 
 import (
 	"bytes"
+	"fmt"
 	"os"
 	"strings"
 )
@@ -17,6 +18,7 @@ const (
 	StateLiveChanges   State = "live-changes"
 	StateSavedChanges  State = "saved-changes"
 	StateNeitherExists State = "neither-exists"
+	StateError         State = "error"
 )
 
 // Display returns the human-readable form of the state, suitable for
@@ -31,6 +33,7 @@ type StatusEntry struct {
 	Live  string `json:"live"`
 	Saved string `json:"saved"`
 	State State  `json:"state"`
+	Error string `json:"error,omitempty"`
 }
 
 // Status compares each entry's live and saved files and returns one
@@ -42,45 +45,49 @@ func Status(specs []Spec) ([]StatusEntry, error) {
 	}
 	out := make([]StatusEntry, 0, len(entries))
 	for _, e := range entries {
+		state, errMsg := compare(e.Live, e.Saved)
 		out = append(out, StatusEntry{
 			Tool:  e.Tool,
 			Live:  e.Live,
 			Saved: e.Saved,
-			State: compare(e.Live, e.Saved),
+			State: state,
+			Error: errMsg,
 		})
 	}
 	return out, nil
 }
 
-func compare(live, saved string) State {
+func compare(live, saved string) (State, string) {
 	li, lerr := os.Stat(live)
 	di, derr := os.Stat(saved)
 	switch {
 	case os.IsNotExist(lerr) && os.IsNotExist(derr):
-		return StateNeitherExists
+		return StateNeitherExists, ""
+	case lerr != nil && !os.IsNotExist(lerr):
+		return StateError, fmt.Sprintf("stat %s: %s", live, lerr)
+	case derr != nil && !os.IsNotExist(derr):
+		return StateError, fmt.Sprintf("stat %s: %s", saved, derr)
 	case os.IsNotExist(lerr):
-		return StateLiveMissing
+		return StateLiveMissing, ""
 	case os.IsNotExist(derr):
-		return StateSavedMissing
-	case lerr != nil || derr != nil:
-		return StateNeitherExists
+		return StateSavedMissing, ""
 	}
 	if li.IsDir() || di.IsDir() {
-		return StateInSync // directories are not compared as units
+		return StateInSync, "" // directories are not compared as units
 	}
 	lb, err := os.ReadFile(live)
 	if err != nil {
-		return StateLiveMissing
+		return StateError, fmt.Sprintf("read %s: %s", live, err)
 	}
 	db, err := os.ReadFile(saved)
 	if err != nil {
-		return StateSavedMissing
+		return StateError, fmt.Sprintf("read %s: %s", saved, err)
 	}
 	if bytes.Equal(lb, db) {
-		return StateInSync
+		return StateInSync, ""
 	}
 	if li.ModTime().After(di.ModTime()) {
-		return StateLiveChanges
+		return StateLiveChanges, ""
 	}
-	return StateSavedChanges
+	return StateSavedChanges, ""
 }

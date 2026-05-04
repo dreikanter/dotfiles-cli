@@ -76,8 +76,34 @@ func TestState_Display(t *testing.T) {
 		StateLiveChanges:   "live changes",
 		StateSavedChanges:  "saved changes",
 		StateNeitherExists: "neither exists",
+		StateError:         "error",
 	}
 	for s, want := range cases {
 		assert.Equal(t, want, s.Display())
 	}
+}
+
+func TestStatus_UnreadableLiveSurfacesError(t *testing.T) {
+	if os.Geteuid() == 0 {
+		t.Skip("permission bits do not block root")
+	}
+	home := t.TempDir()
+	repo := t.TempDir()
+	r := Resolver{RepoRoot: repo, Home: home}
+
+	// Live file inside an unreadable directory: stat fails with EACCES.
+	unreadable := filepath.Join(home, "locked")
+	require.NoError(t, os.MkdirAll(unreadable, 0o755))
+	require.NoError(t, os.WriteFile(filepath.Join(unreadable, ".secret"), []byte("x"), 0o644))
+	require.NoError(t, os.MkdirAll(filepath.Join(repo, "config/g"), 0o755))
+	require.NoError(t, os.WriteFile(filepath.Join(repo, "config/g/.secret"), []byte("x"), 0o644))
+	require.NoError(t, os.Chmod(unreadable, 0o000))
+	t.Cleanup(func() { _ = os.Chmod(unreadable, 0o755) })
+
+	specs := r.Resolve(Manifest{"g": {"~/locked/.secret"}})
+	entries, err := Status(specs)
+	require.NoError(t, err)
+	require.Len(t, entries, 1)
+	assert.Equal(t, StateError, entries[0].State)
+	assert.NotEmpty(t, entries[0].Error)
 }

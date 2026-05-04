@@ -26,12 +26,14 @@ var statusCmd = &cobra.Command{
 	Short: "Show the tracked files status",
 	Long: `Show files whose live copy and saved repository copy disagree.
 
-Plain text lists only out-of-sync entries. JSON includes every entry.
+Plain text lists only out-of-sync entries. JSON includes every entry. Files
+that exist but cannot be read (e.g. permission denied) surface as state
+"error" with the underlying message in the "error" field.
 
 JSON output shape:
 
   {
-    "entries": [{"tool", "live", "saved", "state"}, ...],
+    "entries": [{"tool", "live", "saved", "state", "error"}, ...],
     "summary": {"total": N, "unsynced": N}
   }`,
 	Example: statusExamples,
@@ -60,6 +62,10 @@ JSON output shape:
 		tw := tabwriter.NewWriter(out, 0, 0, 2, ' ', 0)
 		for _, e := range entries {
 			if e.State == dotfiles.StateInSync {
+				continue
+			}
+			if e.State == dotfiles.StateError {
+				fmt.Fprintf(tw, "%s\t%s\t%s\t%s\n", e.State.Display(), e.Tool, e.Live, e.Error)
 				continue
 			}
 			fmt.Fprintf(tw, "%s\t%s\t%s\n", e.State.Display(), e.Tool, e.Live)

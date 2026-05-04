@@ -5,6 +5,7 @@
 ### Added
 
 - `config` output now includes the resolved dotfiles repository root and manifest path: top-level `root` and `config` fields in `--json` mode, and `Root: <path>` and `Config: <path>` header lines above a blank line separating them from the entries in plain-text mode.
+- `status` now surfaces real I/O errors (e.g. permission denied) as a dedicated `error` state instead of misreporting them as `neither-exists` / `live-missing` / `saved-missing`. JSON entries gain an optional `error` field with the underlying message; plain-text rows include the error after the path. Closes [#15].
 
 ### Changed
 
@@ -17,6 +18,7 @@
 - README defers per-command JSON shapes to `dotfiles <command> --help` instead of repeating one example, removing a second source of truth that could drift. Closes [#18].
 
 [#14]: https://github.com/dreikanter/dotfiles-cli/issues/14
+[#15]: https://github.com/dreikanter/dotfiles-cli/issues/15
 [#17]: https://github.com/dreikanter/dotfiles-cli/issues/17
 [#18]: https://github.com/dreikanter/dotfiles-cli/issues/18
 [#22]: https://github.com/dreikanter/dotfiles-cli/issues/22
