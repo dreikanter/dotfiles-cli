@@ -57,7 +57,7 @@
   <g>
     <text class="title" x="720" y="58" text-anchor="middle">dotfiles workflow</text>
     <text class="subtitle" x="720" y="84" text-anchor="middle">
-      live config &#8596; dotfiles repo &#8596; remote &#8212; save, install, sync
+      live config &#8596; dotfiles repo &#8596; remote
     </text>
   </g>
 
