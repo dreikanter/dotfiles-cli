@@ -112,7 +112,7 @@
 
   <!-- ===================== GITHUB (middle) ===================== -->
   <g>
-    <text class="header" x="720" y="124" text-anchor="middle">remote &#183; optional</text>
+    <text class="header" x="720" y="528" text-anchor="middle">remote (optional)</text>
 
     <rect class="frame frame-yellow panel-fill" x="600" y="540" width="240" height="160" rx="10" filter="url(#soft-glow)"/>
 
