@@ -8,6 +8,10 @@
 
 - Rewrote README for clarity.
 
+### Fixed
+
+- `dotfiles --version` no longer fails with `unknown flag: --version` when the binary is built with an empty `Version` ldflag value; it now falls back to Go module build info and finally to `unknown`.
+
 ## [0.1.0] - 2026-05-04
 
 ### Added
