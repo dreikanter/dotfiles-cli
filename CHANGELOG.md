@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [0.1.4] - 2026-05-04
+
+### Removed
+
+- Manifest paths no longer accept a trailing `/*` as a directory marker; use a trailing `/` instead.
+
 ## [0.1.3] - 2026-05-04
 
 ### Added
@@ -18,10 +24,6 @@
 - `--prune`/`-p`, `--verbose`/`-v`, and `--dry-run`/`-n` are no longer global flags; they are now declared only on the commands that consume them (`--prune` on `save`/`install`; `--verbose` and `--dry-run` on `save`/`install`/`init`). `status` and `config` no longer accept these flags. As a side effect, `dotfiles -v` now prints the version.
 - Consolidated near-identical filesystem stat helpers. Closes [#22].
 - README defers per-command JSON shapes to `dotfiles <command> --help` instead of repeating one example, removing a second source of truth that could drift. Closes [#18].
-
-### Removed
-
-- Manifest paths no longer accept a trailing `/*` as a directory marker; use a trailing `/` instead.
 
 [#14]: https://github.com/dreikanter/dotfiles-cli/issues/14
 [#15]: https://github.com/dreikanter/dotfiles-cli/issues/15
