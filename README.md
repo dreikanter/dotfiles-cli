@@ -114,37 +114,21 @@ dotfiles --root ./testdata/sample-repo status
 ## JSON output
 
 Pass `--json` to any command to receive a single JSON object on stdout. JSON
-output is never mixed with plain text. For example, `dotfiles status --json`
-prints a structured report:
+output is never mixed with plain text, and `--verbose` is ignored when `--json`
+is set.
 
-```json
-{
-  "entries": [
-    {
-      "tool": "git",
-      "live": "/home/user/.gitconfig",
-      "saved": "/home/user/.dotfiles/config/git/.gitconfig",
-      "state": "in-sync"
-    }
-  ],
-  "summary": { "total": 1, "unsynced": 0 }
-}
+Per-command JSON shapes are documented in `dotfiles <command> --help` — that
+is the single source of truth. Use `jq` to extract specific fields:
+
+```sh
+dotfiles status --json | jq '.summary.unsynced'
+dotfiles save --json   | jq '.actions[] | select(.action=="error")'
 ```
-
-The `--verbose` flag is ignored when `--json` is set.
 
 The exit code is still non-zero on failure; failures emit an error envelope:
 
 ```json
 { "error": { "message": "load manifest: ..." } }
-```
-
-Per-command shapes are documented in `dotfiles <command> --help`. Use `jq` to
-extract specific fields:
-
-```sh
-dotfiles status --json | jq '.summary.unsynced'
-dotfiles save --json   | jq '.actions[] | select(.action=="error")'
 ```
 
 ## Development
