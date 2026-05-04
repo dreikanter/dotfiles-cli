@@ -4,6 +4,8 @@ An agent-friendly self-describing CLI to manage your [dotfiles](https://dotfiles
 
 ## Install
 
+Go (1.25+) is a prerequisite.
+
 ```sh
 go install github.com/dreikanter/dotfiles-cli/cmd/dotfiles@latest
 ```
@@ -12,8 +14,6 @@ This installs the `dotfiles` binary into `$GOBIN` (default `~/go/bin`); make
 sure that directory is on your `PATH`.
 
 ## Setup
-
-Go (1.25+) is a prerequisite for installing the CLI.
 
 Run `dotfiles init` to scaffold a new dotfiles repository (default
 `~/.dotfiles`):
