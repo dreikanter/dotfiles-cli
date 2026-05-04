@@ -34,7 +34,7 @@ func resetFlags() {
 	dryRun = false
 	verbose = false
 	prune = false
-	statusJSON = false
+	jsonOutput = false
 }
 
 // findTestdataRepo locates testdata/sample-repo relative to the package.
@@ -103,7 +103,6 @@ func TestCLI_ApplyAndStatus(t *testing.T) {
 	assert.Contains(t, out, "dotfiles -> local environment")
 	assert.Contains(t, out, "Files copied:")
 
-	// All files should exist in the fake home now.
 	for _, rel := range []string{".gitconfig", ".gitignore_global", ".zshrc", ".config/nvim/init.lua", ".config/nvim/lua/plugins.lua"} {
 		_, err := os.Stat(filepath.Join(home, rel))
 		assert.NoError(t, err, rel)
@@ -119,31 +118,55 @@ func TestCLI_StatusJSON(t *testing.T) {
 
 	out, err := runCLI(t, "--root", repo, "status", "--json")
 	require.NoError(t, err)
-	var entries []map[string]any
-	require.NoError(t, json.Unmarshal([]byte(out), &entries))
-	require.NotEmpty(t, entries)
-	assert.Contains(t, entries[0], "tool")
-	assert.Contains(t, entries[0], "state")
+	var resp struct {
+		Entries []map[string]any `json:"entries"`
+		Summary struct {
+			Total    int `json:"total"`
+			Unsynced int `json:"unsynced"`
+		} `json:"summary"`
+	}
+	require.NoError(t, json.Unmarshal([]byte(out), &resp))
+	require.NotEmpty(t, resp.Entries)
+	assert.Contains(t, resp.Entries[0], "tool")
+	assert.Contains(t, resp.Entries[0], "state")
+	assert.Equal(t, len(resp.Entries), resp.Summary.Total)
 }
 
-func TestCLI_Config(t *testing.T) {
-	repo, _ := stageRepoAndHome(t)
+func TestCLI_ConfigPlainText(t *testing.T) {
+	repo, home := stageRepoAndHome(t)
 
 	out, err := runCLI(t, "--root", repo, "config")
 	require.NoError(t, err)
-	var mapping map[string]string
-	require.NoError(t, json.Unmarshal([]byte(out), &mapping))
-	require.NotEmpty(t, mapping)
-	for dotfile, local := range mapping {
-		assert.True(t, strings.HasPrefix(dotfile, repo), "dotfile path should be under repo: %s", dotfile)
-		assert.NotEmpty(t, local)
+	assert.Contains(t, out, "->")
+	assert.Contains(t, out, "entries")
+	assert.Contains(t, out, filepath.Join(home, ".gitconfig"))
+	assert.Contains(t, out, filepath.Join(repo, "config/git/.gitconfig"))
+}
+
+func TestCLI_ConfigJSON(t *testing.T) {
+	repo, home := stageRepoAndHome(t)
+
+	out, err := runCLI(t, "--root", repo, "config", "--json")
+	require.NoError(t, err)
+	var resp struct {
+		Entries []struct {
+			Tool    string `json:"tool"`
+			Local   string `json:"local"`
+			Dotfile string `json:"dotfile"`
+		} `json:"entries"`
+	}
+	require.NoError(t, json.Unmarshal([]byte(out), &resp))
+	require.NotEmpty(t, resp.Entries)
+	for _, e := range resp.Entries {
+		assert.NotEmpty(t, e.Tool)
+		assert.True(t, strings.HasPrefix(e.Dotfile, repo), "dotfile under repo: %s", e.Dotfile)
+		assert.True(t, strings.HasPrefix(e.Local, home), "local under home: %s", e.Local)
 	}
 }
 
 func TestCLI_SaveDryRun(t *testing.T) {
 	repo, home := stageRepoAndHome(t)
 
-	// populate the fake home from the mirror, then mutate one file locally
 	_, err := runCLI(t, "--root", repo, "apply")
 	require.NoError(t, err)
 	require.NoError(t, os.WriteFile(filepath.Join(home, ".gitconfig"), []byte("local override\n"), 0o644))
@@ -155,6 +178,58 @@ func TestCLI_SaveDryRun(t *testing.T) {
 	got, err := os.ReadFile(filepath.Join(repo, "config/git/.gitconfig"))
 	require.NoError(t, err)
 	assert.NotContains(t, string(got), "local override", "dry-run must not write")
+}
+
+func TestCLI_SaveJSON(t *testing.T) {
+	repo, home := stageRepoAndHome(t)
+
+	_, err := runCLI(t, "--root", repo, "apply")
+	require.NoError(t, err)
+	require.NoError(t, os.WriteFile(filepath.Join(home, ".gitconfig"), []byte("changed\n"), 0o644))
+
+	out, err := runCLI(t, "--root", repo, "save", "--json")
+	require.NoError(t, err)
+	var resp struct {
+		Direction string `json:"direction"`
+		DryRun    bool   `json:"dryRun"`
+		Copied    int    `json:"copied"`
+		Removed   int    `json:"removed"`
+		Errors    int    `json:"errors"`
+		Actions   []struct {
+			Action  string `json:"action"`
+			From    string `json:"from"`
+			To      string `json:"to"`
+			Path    string `json:"path"`
+			Message string `json:"message"`
+		} `json:"actions"`
+	}
+	require.NoError(t, json.Unmarshal([]byte(out), &resp), "JSON-only stdout: %s", out)
+	assert.Equal(t, "save", resp.Direction)
+	assert.False(t, resp.DryRun)
+	assert.Equal(t, 0, resp.Errors)
+	assert.NotZero(t, resp.Copied)
+	require.NotEmpty(t, resp.Actions)
+	assert.Equal(t, "copy", resp.Actions[0].Action)
+	// JSON mode must not leak the plain-text header.
+	assert.NotContains(t, out, "local environment ->")
+}
+
+func TestCLI_ApplyJSONDryRun(t *testing.T) {
+	repo, _ := stageRepoAndHome(t)
+
+	out, err := runCLI(t, "--root", repo, "apply", "--json", "-n", "-v")
+	require.NoError(t, err)
+	var resp struct {
+		Direction string `json:"direction"`
+		DryRun    bool   `json:"dryRun"`
+		Actions   []map[string]any
+	}
+	require.NoError(t, json.Unmarshal([]byte(out), &resp))
+	assert.Equal(t, "apply", resp.Direction)
+	assert.True(t, resp.DryRun)
+	// --verbose must be ignored in JSON mode (no "OK ..." lines).
+	assert.NotContains(t, out, "\nOK ")
+	assert.NotContains(t, out, "[DRY RUN]")
 }
 
 func TestCLI_SaveAndApplyRoundtrip(t *testing.T) {
@@ -187,4 +262,20 @@ func TestCLI_MissingManifest(t *testing.T) {
 	t.Setenv("HOME", t.TempDir())
 	_, err := runCLI(t, "--root", emptyRoot, "status")
 	require.Error(t, err)
+}
+
+func TestCLI_MissingManifestJSON(t *testing.T) {
+	emptyRoot := t.TempDir()
+	t.Setenv("HOME", t.TempDir())
+	out, err := runCLI(t, "--root", emptyRoot, "status", "--json")
+	// In JSON mode the command writes the envelope and returns errSilent so
+	// Execute can exit non-zero without further output.
+	require.ErrorIs(t, err, errSilent)
+	var env struct {
+		Error struct {
+			Message string `json:"message"`
+		} `json:"error"`
+	}
+	require.NoError(t, json.Unmarshal([]byte(out), &env), "JSON envelope: %s", out)
+	assert.NotEmpty(t, env.Error.Message)
 }

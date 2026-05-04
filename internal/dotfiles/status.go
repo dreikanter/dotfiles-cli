@@ -2,7 +2,6 @@ package dotfiles
 
 import (
 	"bytes"
-	"encoding/json"
 	"os"
 )
 
@@ -76,29 +75,4 @@ func compare(local, dotfile string) State {
 		return StateLocalChanges
 	}
 	return StateDotfileChanges
-}
-
-// ConfigJSON returns a deterministic JSON object mapping dotfile path to local
-// path for every entry produced by the manifest.
-func ConfigJSON(specs []Spec) ([]byte, error) {
-	entries, err := ExpandAllUnion(specs)
-	if err != nil {
-		return nil, err
-	}
-	type pair struct {
-		Dotfile string
-		Local   string
-	}
-	pairs := make([]pair, 0, len(entries))
-	for _, e := range entries {
-		pairs = append(pairs, pair{e.Dotfile, e.Local})
-	}
-	// Use an ordered marshal: write keys in the order of entries for stable output.
-	// json.Marshal of a map sorts keys alphabetically; that's good enough for an
-	// agent-facing format and keeps the output deterministic.
-	m := make(map[string]string, len(pairs))
-	for _, p := range pairs {
-		m[p.Dotfile] = p.Local
-	}
-	return json.MarshalIndent(m, "", "  ")
 }
