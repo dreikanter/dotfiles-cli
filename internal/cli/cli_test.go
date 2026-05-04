@@ -240,8 +240,9 @@ func TestCLI_InstallJSONDryRun(t *testing.T) {
 	require.NoError(t, json.Unmarshal([]byte(out), &resp))
 	assert.Equal(t, "install", resp.Direction)
 	assert.True(t, resp.DryRun)
-	// --verbose must be ignored in JSON mode (no "OK ..." lines).
-	assert.NotContains(t, out, "\nOK ")
+	// --verbose must be ignored in JSON mode: no plain-text per-file lines or header.
+	assert.NotContains(t, out, "\ncopy ")
+	assert.NotContains(t, out, "\nunchanged ")
 	assert.NotContains(t, out, "[DRY RUN]")
 }
 
