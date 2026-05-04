@@ -16,8 +16,7 @@ type Direction int
 const (
 	// DirSave copies live files into the dotfiles repository.
 	DirSave Direction = iota
-	// DirInstall copies repository files to their live paths on the live
-	// filesystem.
+	// DirInstall copies repository files to their live paths.
 	DirInstall
 )
 
@@ -49,8 +48,8 @@ type Result struct {
 }
 
 // Sync copies files for the given specs in the chosen direction. When Prune is
-// set in DirInstall mode, files in the destination tree that are not declared
-// by the manifest are removed.
+// set, files in the destination tree that are not declared by the manifest are
+// removed.
 func Sync(specs []Spec, dir Direction, opts Options) (Result, error) {
 	if opts.Out == nil {
 		opts.Out = io.Discard

@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [0.1.4] - 2026-05-04
+
+### Removed
+
+- Manifest paths no longer accept a trailing `/*` as a directory marker; use a trailing `/` instead.
+
 ## [0.1.3] - 2026-05-04
 
 ### Added

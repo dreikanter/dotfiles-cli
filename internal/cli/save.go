@@ -98,10 +98,6 @@ func runSync(cmd *cobra.Command, dir dotfiles.Direction, name, header string) er
 		return handleErr(cmd, err)
 	}
 	if jsonOutput {
-		actions := res.Actions
-		if actions == nil {
-			actions = []dotfiles.Action{}
-		}
 		filter, err := buildFilter(sel)
 		if err != nil {
 			return handleErr(cmd, err)
@@ -114,7 +110,7 @@ func runSync(cmd *cobra.Command, dir dotfiles.Direction, name, header string) er
 			Removed:   res.Removed,
 			Errors:    res.Errors,
 			Filter:    filter,
-			Actions:   actions,
+			Actions:   res.Actions,
 		}); writeErr != nil {
 			return writeErr
 		}
