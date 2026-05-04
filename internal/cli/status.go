@@ -25,14 +25,14 @@ var statusCmd = &cobra.Command{
 	Use:     "status",
 	Aliases: []string{"ls"},
 	Short:   "Show out-of-sync files",
-	Long: `Show files whose local copy and dotfile mirror disagree.
+	Long: `Show files whose live copy and saved repository copy disagree.
 
 Plain text lists only out-of-sync entries. JSON includes every entry.
 
 JSON output shape:
 
   {
-    "entries": [{"tool", "local", "dotfile", "state"}, ...],
+    "entries": [{"tool", "live", "saved", "state"}, ...],
     "summary": {"total": N, "unsynced": N}
   }`,
 	Example: statusExamples,
@@ -63,7 +63,7 @@ JSON output shape:
 			if e.State == dotfiles.StateInSync {
 				continue
 			}
-			fmt.Fprintf(tw, "%s\t%s\t%s\n", e.State.Display(), e.Tool, e.Local)
+			fmt.Fprintf(tw, "%s\t%s\t%s\n", e.State.Display(), e.Tool, e.Live)
 		}
 		_ = tw.Flush()
 		if unsynced == 0 {

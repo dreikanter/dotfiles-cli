@@ -111,12 +111,12 @@ func copyTree(src, dst string) error {
 	})
 }
 
-func TestCLI_ApplyAndStatus(t *testing.T) {
+func TestCLI_InstallAndStatus(t *testing.T) {
 	repo, home := stageRepoAndHome(t)
 
-	out, err := runCLI(t, "--root", repo, "apply")
-	require.NoError(t, err, "apply failed: %s", out)
-	assert.Contains(t, out, "dotfiles -> local environment")
+	out, err := runCLI(t, "--root", repo, "install")
+	require.NoError(t, err, "install failed: %s", out)
+	assert.Contains(t, out, "saved -> live")
 	assert.Contains(t, out, "Copied:")
 
 	for _, rel := range []string{".gitconfig", ".gitignore_global", ".zshrc", ".config/nvim/init.lua", ".config/nvim/lua/plugins.lua"} {
@@ -177,9 +177,9 @@ func TestCLI_ConfigJSON(t *testing.T) {
 		Root    string `json:"root"`
 		Config  string `json:"config"`
 		Entries []struct {
-			Tool    string `json:"tool"`
-			Local   string `json:"local"`
-			Dotfile string `json:"dotfile"`
+			Tool  string `json:"tool"`
+			Live  string `json:"live"`
+			Saved string `json:"saved"`
 		} `json:"entries"`
 	}
 	require.NoError(t, json.Unmarshal([]byte(out), &resp))
@@ -188,15 +188,15 @@ func TestCLI_ConfigJSON(t *testing.T) {
 	require.NotEmpty(t, resp.Entries)
 	for _, e := range resp.Entries {
 		assert.NotEmpty(t, e.Tool)
-		assert.True(t, strings.HasPrefix(e.Dotfile, repo), "dotfile under repo: %s", e.Dotfile)
-		assert.True(t, strings.HasPrefix(e.Local, home), "local under home: %s", e.Local)
+		assert.True(t, strings.HasPrefix(e.Saved, repo), "saved under repo: %s", e.Saved)
+		assert.True(t, strings.HasPrefix(e.Live, home), "live under home: %s", e.Live)
 	}
 }
 
 func TestCLI_SaveDryRun(t *testing.T) {
 	repo, home := stageRepoAndHome(t)
 
-	_, err := runCLI(t, "--root", repo, "apply")
+	_, err := runCLI(t, "--root", repo, "install")
 	require.NoError(t, err)
 	require.NoError(t, os.WriteFile(filepath.Join(home, ".gitconfig"), []byte("local override\n"), 0o644))
 
@@ -212,7 +212,7 @@ func TestCLI_SaveDryRun(t *testing.T) {
 func TestCLI_SaveJSON(t *testing.T) {
 	repo, home := stageRepoAndHome(t)
 
-	_, err := runCLI(t, "--root", repo, "apply")
+	_, err := runCLI(t, "--root", repo, "install")
 	require.NoError(t, err)
 	require.NoError(t, os.WriteFile(filepath.Join(home, ".gitconfig"), []byte("changed\n"), 0o644))
 
@@ -240,13 +240,13 @@ func TestCLI_SaveJSON(t *testing.T) {
 	require.NotEmpty(t, resp.Actions)
 	assert.Equal(t, "copy", resp.Actions[0].Action)
 	// JSON mode must not leak the plain-text header.
-	assert.NotContains(t, out, "local environment ->")
+	assert.NotContains(t, out, "live ->")
 }
 
-func TestCLI_ApplyJSONDryRun(t *testing.T) {
+func TestCLI_InstallJSONDryRun(t *testing.T) {
 	repo, _ := stageRepoAndHome(t)
 
-	out, err := runCLI(t, "--root", repo, "apply", "--json", "-n", "-v")
+	out, err := runCLI(t, "--root", repo, "install", "--json", "-n", "-v")
 	require.NoError(t, err)
 	var resp struct {
 		Direction string `json:"direction"`
@@ -254,7 +254,7 @@ func TestCLI_ApplyJSONDryRun(t *testing.T) {
 		Actions   []map[string]any
 	}
 	require.NoError(t, json.Unmarshal([]byte(out), &resp))
-	assert.Equal(t, "apply", resp.Direction)
+	assert.Equal(t, "install", resp.Direction)
 	assert.True(t, resp.DryRun)
 	// --verbose must be ignored in JSON mode (no "OK ..." lines).
 	assert.NotContains(t, out, "\nOK ")
@@ -265,7 +265,7 @@ func TestCLI_SaveReportsOnlyChangedFiles(t *testing.T) {
 	repo, home := stageRepoAndHome(t)
 
 	// Seed the local home from the repo so the second save has nothing to write.
-	_, err := runCLI(t, "--root", repo, "apply")
+	_, err := runCLI(t, "--root", repo, "install")
 	require.NoError(t, err)
 
 	// Modify a single file; save should report only it.
@@ -285,7 +285,7 @@ func TestCLI_SaveReportsOnlyChangedFiles(t *testing.T) {
 
 func TestCLI_SaveDryRunReportsChanges(t *testing.T) {
 	repo, home := stageRepoAndHome(t)
-	_, err := runCLI(t, "--root", repo, "apply")
+	_, err := runCLI(t, "--root", repo, "install")
 	require.NoError(t, err)
 	require.NoError(t, os.WriteFile(filepath.Join(home, ".gitconfig"), []byte("changed\n"), 0o644))
 
@@ -305,7 +305,7 @@ func TestCLI_SaveDryRunReportsChanges(t *testing.T) {
 
 func TestCLI_SavePruneReportsDeletedFiles(t *testing.T) {
 	repo, _ := stageRepoAndHome(t)
-	_, err := runCLI(t, "--root", repo, "apply")
+	_, err := runCLI(t, "--root", repo, "install")
 	require.NoError(t, err)
 
 	stray := filepath.Join(repo, "config/nvim/leftover.lua")
@@ -320,7 +320,7 @@ func TestCLI_SavePruneReportsDeletedFiles(t *testing.T) {
 
 func TestCLI_SaveJSONIncludesUnchanged(t *testing.T) {
 	repo, _ := stageRepoAndHome(t)
-	_, err := runCLI(t, "--root", repo, "apply")
+	_, err := runCLI(t, "--root", repo, "install")
 	require.NoError(t, err)
 
 	out, err := runCLI(t, "--root", repo, "save", "--json")
@@ -344,7 +344,7 @@ func TestCLI_SaveJSONIncludesUnchanged(t *testing.T) {
 
 func TestCLI_StatusShowsToolName(t *testing.T) {
 	repo, home := stageRepoAndHome(t)
-	_, err := runCLI(t, "--root", repo, "apply")
+	_, err := runCLI(t, "--root", repo, "install")
 	require.NoError(t, err)
 
 	// Make one file out of sync so it surfaces in the report.
@@ -362,7 +362,7 @@ func TestCLI_StatusShowsToolName(t *testing.T) {
 	t.Fatalf("no .gitconfig row in status output:\n%s", out)
 }
 
-func TestCLI_SaveAndApplyRoundtrip(t *testing.T) {
+func TestCLI_SaveAndInstallRoundtrip(t *testing.T) {
 	repo, home := stageRepoAndHome(t)
 
 	require.NoError(t, os.WriteFile(filepath.Join(home, ".gitconfig"), []byte("[user]\n  name = New\n"), 0o644))
@@ -380,7 +380,7 @@ func TestCLI_SaveAndApplyRoundtrip(t *testing.T) {
 	assert.Equal(t, "[user]\n  name = New\n", string(got))
 
 	require.NoError(t, os.RemoveAll(filepath.Join(home, ".config/nvim")))
-	_, err = runCLI(t, "--root", repo, "apply")
+	_, err = runCLI(t, "--root", repo, "install")
 	require.NoError(t, err)
 	got, err = os.ReadFile(filepath.Join(home, ".config/nvim/init.lua"))
 	require.NoError(t, err)
@@ -412,7 +412,7 @@ func TestCLI_MissingManifestJSON(t *testing.T) {
 
 func TestCLI_SaveWithToolFilter(t *testing.T) {
 	repo, home := stageRepoAndHome(t)
-	_, err := runCLI(t, "--root", repo, "apply")
+	_, err := runCLI(t, "--root", repo, "install")
 	require.NoError(t, err)
 
 	require.NoError(t, os.WriteFile(filepath.Join(home, ".gitconfig"), []byte("git changed\n"), 0o644))
@@ -434,7 +434,7 @@ func TestCLI_SaveWithToolFilter(t *testing.T) {
 
 func TestCLI_SaveWithToolAndFileFilter(t *testing.T) {
 	repo, home := stageRepoAndHome(t)
-	_, err := runCLI(t, "--root", repo, "apply")
+	_, err := runCLI(t, "--root", repo, "install")
 	require.NoError(t, err)
 
 	require.NoError(t, os.WriteFile(filepath.Join(home, ".gitconfig"), []byte("only this\n"), 0o644))
@@ -455,7 +455,7 @@ func TestCLI_SaveWithToolAndFileFilter(t *testing.T) {
 
 func TestCLI_SaveJSONWithFilter(t *testing.T) {
 	repo, home := stageRepoAndHome(t)
-	_, err := runCLI(t, "--root", repo, "apply")
+	_, err := runCLI(t, "--root", repo, "install")
 	require.NoError(t, err)
 	require.NoError(t, os.WriteFile(filepath.Join(home, ".gitconfig"), []byte("changed\n"), 0o644))
 
@@ -476,7 +476,7 @@ func TestCLI_SaveJSONWithFilter(t *testing.T) {
 
 func TestCLI_SaveJSONNoFilter_OmitsFilterField(t *testing.T) {
 	repo, _ := stageRepoAndHome(t)
-	_, err := runCLI(t, "--root", repo, "apply")
+	_, err := runCLI(t, "--root", repo, "install")
 	require.NoError(t, err)
 	out, err := runCLI(t, "--root", repo, "save", "--json")
 	require.NoError(t, err)
@@ -515,7 +515,7 @@ func TestCLI_FileAndPruneMutuallyExclusive(t *testing.T) {
 
 func TestCLI_PruneWithToolAllowed(t *testing.T) {
 	repo, _ := stageRepoAndHome(t)
-	_, err := runCLI(t, "--root", repo, "apply")
+	_, err := runCLI(t, "--root", repo, "install")
 	require.NoError(t, err)
 	_, err = runCLI(t, "--root", repo, "save", "--tool", "git", "--prune")
 	require.NoError(t, err)
@@ -523,7 +523,7 @@ func TestCLI_PruneWithToolAllowed(t *testing.T) {
 
 func TestCLI_StatusWithFilter(t *testing.T) {
 	repo, _ := stageRepoAndHome(t)
-	_, err := runCLI(t, "--root", repo, "apply")
+	_, err := runCLI(t, "--root", repo, "install")
 	require.NoError(t, err)
 
 	out, err := runCLI(t, "--root", repo, "status", "--tool", "git")

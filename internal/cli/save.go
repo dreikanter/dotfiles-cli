@@ -29,7 +29,7 @@ type syncResponse struct {
 const syncJSONShape = `JSON output shape:
 
   {
-    "direction": "save"|"apply",
+    "direction": "save"|"install",
     "dryRun":    bool,
     "copied":    N,
     "unchanged": N,
@@ -41,33 +41,32 @@ const syncJSONShape = `JSON output shape:
 
 const syncExamples = `  dotfiles save --tool git
   dotfiles save --tool git --file ~/.gitconfig --file ~/.gitignore_global
-  dotfiles apply --tool git --file ~/.gitconfig`
+  dotfiles install --tool git --file ~/.gitconfig`
 
 var saveCmd = &cobra.Command{
 	Use:     "save",
-	Short:   "Copy local environment files into the dotfiles repository",
-	Long:    "Copy local environment files into the dotfiles repository.\n\n" + syncJSONShape,
+	Short:   "Copy tracked files into the dotfiles repository",
+	Long:    "Copy tracked files into the dotfiles repository.\n\n" + syncJSONShape,
 	Example: syncExamples,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return runSync(cmd, dotfiles.DirSave, "save", "local environment -> dotfiles")
+		return runSync(cmd, dotfiles.DirSave, "save", "live -> saved")
 	},
 }
 
-var applyCmd = &cobra.Command{
-	Use:     "apply",
-	Aliases: []string{"load"},
-	Short:   "Copy dotfiles repository files into the local environment",
-	Long:    "Copy dotfiles repository files into the local environment.\n\n" + syncJSONShape,
+var installCmd = &cobra.Command{
+	Use:     "install",
+	Short:   "Copy tracked files to their live paths",
+	Long:    "Copy tracked files to their live paths.\n\n" + syncJSONShape,
 	Example: syncExamples,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return runSync(cmd, dotfiles.DirApply, "apply", "dotfiles -> local environment")
+		return runSync(cmd, dotfiles.DirInstall, "install", "saved -> live")
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(saveCmd)
-	rootCmd.AddCommand(applyCmd)
-	for _, c := range []*cobra.Command{saveCmd, applyCmd} {
+	rootCmd.AddCommand(installCmd)
+	for _, c := range []*cobra.Command{saveCmd, installCmd} {
 		addFilterFlags(c)
 		c.Flags().BoolVarP(&dryRun, "dry-run", "n", false, "preview actions without writing")
 		c.Flags().BoolVarP(&verbose, "verbose", "v", false, "log every file action (ignored when --json is set)")

@@ -47,19 +47,20 @@ func TestSync_Save(t *testing.T) {
 	mustEqualFile(t, filepath.Join(repo, "config/nvim/lua/plugins.lua"), "plugins\n")
 }
 
-func TestSync_Apply(t *testing.T) {
+func TestSync_Install(t *testing.T) {
 	home, repo, specs := scenario(t)
 
-	// populate the dotfile mirror from local first
+	// populate the saved copy from installed first
 	_, err := Sync(specs, DirSave, Options{})
 	require.NoError(t, err)
 
-	// wipe locals and edit the mirror, then apply pulls everything back
+	// wipe installed copies and edit the saved copy, then install pulls
+	// everything back
 	require.NoError(t, os.RemoveAll(filepath.Join(home, ".gitconfig")))
 	require.NoError(t, os.RemoveAll(filepath.Join(home, ".config/nvim")))
 	require.NoError(t, os.WriteFile(filepath.Join(repo, "config/git/.gitconfig"), []byte("changed\n"), 0o644))
 
-	res, err := Sync(specs, DirApply, Options{})
+	res, err := Sync(specs, DirInstall, Options{})
 	require.NoError(t, err)
 	assert.Equal(t, 0, res.Errors)
 	mustEqualFile(t, filepath.Join(home, ".gitconfig"), "changed\n")
@@ -185,7 +186,7 @@ func TestSync_Prune(t *testing.T) {
 	_, err := Sync(specs, DirSave, Options{})
 	require.NoError(t, err)
 
-	// add a stray file inside the dotfiles mirror
+	// add a stray file inside the saved repository copy
 	stray := filepath.Join(repo, "config/nvim/leftover.lua")
 	require.NoError(t, os.WriteFile(stray, []byte("stale"), 0o644))
 
@@ -196,16 +197,16 @@ func TestSync_Prune(t *testing.T) {
 	assert.True(t, os.IsNotExist(err))
 }
 
-func TestSync_PruneApply(t *testing.T) {
+func TestSync_PruneInstall(t *testing.T) {
 	home, _, specs := scenario(t)
 	_, err := Sync(specs, DirSave, Options{})
 	require.NoError(t, err)
 
-	// add a stray file in the local nvim dir
+	// add a stray file in the installed nvim dir
 	stray := filepath.Join(home, ".config/nvim/leftover.lua")
 	require.NoError(t, os.WriteFile(stray, []byte("stale"), 0o644))
 
-	res, err := Sync(specs, DirApply, Options{Prune: true})
+	res, err := Sync(specs, DirInstall, Options{Prune: true})
 	require.NoError(t, err)
 	assert.GreaterOrEqual(t, res.Removed, 1)
 	_, err = os.Stat(stray)
