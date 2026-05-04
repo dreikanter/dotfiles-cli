@@ -125,10 +125,10 @@ func runInit(cmd *cobra.Command) error {
 	gitDir := filepath.Join(root, ".git")
 
 	if !forceInit {
-		if existsFile(manifestFile) {
+		if st, err := os.Stat(manifestFile); err == nil && !st.IsDir() {
 			return handleErr(cmd, fmt.Errorf("%s already exists; pass --force to overwrite", manifestFile))
 		}
-		if existsFile(readmeFile) {
+		if st, err := os.Stat(readmeFile); err == nil && !st.IsDir() {
 			return handleErr(cmd, fmt.Errorf("%s already exists; pass --force to overwrite", readmeFile))
 		}
 	}
@@ -188,7 +188,8 @@ func runInit(cmd *cobra.Command) error {
 }
 
 func writeInitFile(path, content string, dryRun, force bool, logOut io.Writer) (initAction, error) {
-	exists := existsFile(path)
+	st, err := os.Stat(path)
+	exists := err == nil && !st.IsDir()
 	switch {
 	case exists && !force:
 		fmt.Fprintf(logOut, "skip %s\n", path)
@@ -217,7 +218,7 @@ func writeInitFile(path, content string, dryRun, force bool, logOut io.Writer) (
 }
 
 func initGit(gitPath, root, gitDir string, dryRun bool, logOut io.Writer) (initAction, error) {
-	if existsDir(gitDir) {
+	if st, err := os.Stat(gitDir); err == nil && st.IsDir() {
 		fmt.Fprintf(logOut, "git already initialized in %s\n", root)
 		return initAction{Action: "git-skip", Path: gitDir, Message: "already initialized"}, nil
 	}
@@ -232,14 +233,4 @@ func initGit(gitPath, root, gitDir string, dryRun bool, logOut io.Writer) (initA
 		return initAction{}, fmt.Errorf("git init %s: %w", root, err)
 	}
 	return initAction{Action: "git-init", Path: gitDir}, nil
-}
-
-func existsFile(p string) bool {
-	st, err := os.Stat(p)
-	return err == nil && !st.IsDir()
-}
-
-func existsDir(p string) bool {
-	st, err := os.Stat(p)
-	return err == nil && st.IsDir()
 }

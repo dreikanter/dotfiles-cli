@@ -52,7 +52,11 @@ func (r *Resolver) resolveTool(tool string, paths []string) []Spec {
 	items := make([]item, 0, len(paths))
 	for _, p := range paths {
 		resolved := expand(p, r.Home)
-		isDir := hasDirMarker(p) || pathIsDir(resolved)
+		isDir := hasDirMarker(p)
+		if !isDir {
+			st, err := os.Stat(resolved)
+			isDir = err == nil && st.IsDir()
+		}
 		items = append(items, item{p, resolved, isDir})
 	}
 	containers := make([]string, 0, len(items))
@@ -183,11 +187,6 @@ func walkFiles(root string, set map[string]struct{}) error {
 		set[rel] = struct{}{}
 		return nil
 	})
-}
-
-func pathIsDir(p string) bool {
-	info, err := os.Stat(p)
-	return err == nil && info.IsDir()
 }
 
 // commonDirPrefix returns the longest directory shared by all input paths.
