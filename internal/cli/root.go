@@ -19,6 +19,8 @@ var (
 	verbose      bool
 	prune        bool
 	jsonOutput   bool
+	filterTool   string
+	filterFiles  []string
 
 	// Version is overridden at build time via -ldflags.
 	Version = "dev"
@@ -102,8 +104,10 @@ func resolveManifest(root string) (string, error) {
 	return filepath.Abs(m)
 }
 
-// loadSpecs is a convenience for command implementations.
-func loadSpecs() ([]dotfiles.Spec, error) {
+// loadSpecs resolves the manifest and filters specs through sel. Validation
+// runs before any IO, so a bad filter (unknown tool, file not declared) is a
+// hard error with no side effects.
+func loadSpecs(sel dotfiles.Selector) ([]dotfiles.Spec, error) {
 	root, err := resolveRoot()
 	if err != nil {
 		return nil, err
@@ -121,5 +125,18 @@ func loadSpecs() ([]dotfiles.Spec, error) {
 		return nil, err
 	}
 	r := dotfiles.Resolver{RepoRoot: root, Home: home}
-	return r.Resolve(m), nil
+	return sel.Apply(r.Resolve(m), home)
+}
+
+// currentSelector reads the package-level filter flags into a Selector.
+func currentSelector() dotfiles.Selector {
+	return dotfiles.Selector{Tool: filterTool, Files: filterFiles}
+}
+
+// addFilterFlags registers --tool and --file on cmd and binds them to the
+// package-level filter variables.
+func addFilterFlags(cmd *cobra.Command) {
+	cmd.Flags().StringVar(&filterTool, "tool", "", "restrict to a single manifest tool")
+	cmd.Flags().StringArrayVar(&filterFiles, "file", nil,
+		"restrict to specific files within --tool (repeatable; expanded as ~ and CWD-relative; matched literally against manifest entries)")
 }
