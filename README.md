@@ -19,13 +19,7 @@ Run `dotfiles init` to scaffold a new dotfiles repository (default
 `~/.dotfiles`):
 
 ```sh
-$ dotfiles init
-Initialized ~/.dotfiles
-
-$ tree ~/.dotfiles
-~/.dotfiles
-├── README.md
-└── dotfiles.json
+dotfiles init
 ```
 
 It creates the directory, writes an empty `dotfiles.json` manifest and a
@@ -91,6 +85,12 @@ dotfiles config --tool git
 
 # Re-scaffold an existing repository, overwriting dotfiles.json and README.md
 dotfiles init --force
+
+# Inspect what init generated
+$ tree ~/.dotfiles
+~/.dotfiles
+├── README.md
+└── dotfiles.json
 
 # Run against a custom repository (handy for demos and testing)
 $ dotfiles --root ./testdata/sample-repo status
