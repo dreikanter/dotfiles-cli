@@ -192,8 +192,9 @@
 
   <!-- ===================== LEGEND / COMMAND CHEAT SHEET ===================== -->
   <g transform="translate(0,760)">
-    <line class="divider" x1="60" y1="0" x2="1380" y2="0"/>
-    <text class="header" x="60" y="30">command reference</text>
+    <line class="divider" x1="60" y1="0" x2="620" y2="0"/>
+    <line class="divider" x1="820" y1="0" x2="1380" y2="0"/>
+    <text class="header" x="720" y="4" text-anchor="middle">command reference</text>
 
     <g transform="translate(60,52)">
       <text class="cmd" x="0" y="14">dotfiles init</text>
