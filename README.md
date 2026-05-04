@@ -100,8 +100,24 @@ $ dotfiles --root ./testdata/sample-repo status
 ## JSON output
 
 Pass `--json` to any command to receive a single JSON object on stdout. JSON
-output is never mixed with plain text and `--verbose` is ignored. The exit
-code is still non-zero on failure; failures emit an error envelope:
+output is never mixed with plain text and `--verbose` is ignored. For example,
+`dotfiles status --json` prints a structured report:
+
+```json
+{
+  "entries": [
+    {
+      "tool": "git",
+      "local": "/home/alex/.gitconfig",
+      "dotfile": "/home/alex/.dotfiles/config/git/.gitconfig",
+      "state": "in sync"
+    }
+  ],
+  "summary": { "total": 1, "unsynced": 0 }
+}
+```
+
+The exit code is still non-zero on failure; failures emit an error envelope:
 
 ```json
 { "error": { "message": "load manifest: ..." } }
