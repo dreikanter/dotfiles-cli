@@ -5,6 +5,7 @@
 ### Changed
 
 - `status --json` state labels are now hyphenated (e.g. `in-sync`, `dotfile-missing`); plain-text output is unchanged.
+- Error messages from `save`, `apply`, `init`, `status`, and `config` now name the failed operation and the affected path (e.g. `open /home/foo/.bashrc: permission denied`) instead of returning bare OS errors. Improves both plain-text and `--json` output (the `error.message` and per-file `actions[].message` fields).
 
 ## [0.1.1] - 2026-05-04
 

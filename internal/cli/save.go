@@ -120,7 +120,7 @@ func runSync(cmd *cobra.Command, dir dotfiles.Direction, name, header string) er
 	}
 	fmt.Fprintln(out)
 	if res.Errors > 0 {
-		return fmt.Errorf("%d errors", res.Errors)
+		return fmt.Errorf("%s failed: %d errors", name, res.Errors)
 	}
 	return nil
 }

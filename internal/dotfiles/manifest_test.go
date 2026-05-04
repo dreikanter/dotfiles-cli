@@ -1,6 +1,8 @@
 package dotfiles
 
 import (
+	"errors"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"testing"
@@ -27,7 +29,7 @@ func TestLoadManifest(t *testing.T) {
 func TestLoadManifest_NotFound(t *testing.T) {
 	_, err := LoadManifest(filepath.Join(t.TempDir(), "missing.json"))
 	require.Error(t, err)
-	assert.True(t, os.IsNotExist(err))
+	assert.True(t, errors.Is(err, fs.ErrNotExist))
 }
 
 func TestLoadManifest_BadJSON(t *testing.T) {

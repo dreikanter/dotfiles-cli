@@ -88,11 +88,15 @@ func resolveRoot() (string, error) {
 	if r == "" {
 		home, err := os.UserHomeDir()
 		if err != nil {
-			return "", err
+			return "", fmt.Errorf("resolve home dir: %w", err)
 		}
 		r = filepath.Join(home, ".dotfiles")
 	}
-	return filepath.Abs(r)
+	abs, err := filepath.Abs(r)
+	if err != nil {
+		return "", fmt.Errorf("resolve absolute path of %s: %w", r, err)
+	}
+	return abs, nil
 }
 
 // resolveManifest returns the absolute manifest path.
@@ -104,7 +108,11 @@ func resolveManifest(root string) (string, error) {
 	if m == "" {
 		m = filepath.Join(root, "dotfiles.json")
 	}
-	return filepath.Abs(m)
+	abs, err := filepath.Abs(m)
+	if err != nil {
+		return "", fmt.Errorf("resolve absolute path of %s: %w", m, err)
+	}
+	return abs, nil
 }
 
 // loadSpecs resolves the manifest and filters specs through sel. Validation
@@ -125,7 +133,7 @@ func loadSpecs(sel dotfiles.Selector) ([]dotfiles.Spec, error) {
 	}
 	home, err := os.UserHomeDir()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("resolve home dir: %w", err)
 	}
 	r := dotfiles.Resolver{RepoRoot: root, Home: home}
 	return sel.Apply(r.Resolve(m), home)
