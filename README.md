@@ -4,7 +4,7 @@ An agent-friendly self-describing CLI to manage your [dotfiles](https://dotfiles
 
 ## Install
 
-Go (1.25+) is a prerequisite.
+Prerequisites: Go (1.25+) and `git`.
 
 ```sh
 go install github.com/dreikanter/dotfiles-cli/cmd/dotfiles@latest
