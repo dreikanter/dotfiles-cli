@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 920"
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 880"
      font-family="ui-monospace, 'JetBrains Mono', 'SF Mono', Menlo, Consolas, monospace">
   <defs>
     <style><![CDATA[
@@ -51,7 +51,7 @@
     </marker>
   </defs>
 
-  <rect class="bg" width="1440" height="920"/>
+  <rect class="bg" width="1440" height="880"/>
 
   <!-- Title -->
   <g>
@@ -233,17 +233,5 @@
       <text class="note" x="0" y="34">sync ~/.dotfiles via</text>
       <text class="note" x="0" y="50">your remote of choice</text>
     </g>
-  </g>
-
-  <!-- Color legend (bottom-right corner) -->
-  <g transform="translate(60,880)">
-    <line class="line-pink" x1="0" y1="0" x2="28" y2="0" marker-end="url(#arr-pink)"/>
-    <text class="note" x="36" y="4">file copy: live &#8594; repo</text>
-
-    <line class="line-cyan" x1="240" y1="0" x2="268" y2="0" marker-end="url(#arr-cyan)"/>
-    <text class="note" x="276" y="4">file copy: repo &#8594; live</text>
-
-    <line class="line-yellow" x1="480" y1="0" x2="508" y2="0" marker-end="url(#arr-yellow)"/>
-    <text class="note" x="516" y="4">git transport (push / pull)</text>
   </g>
 </svg>
