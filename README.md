@@ -1,17 +1,17 @@
-# dotfiles-cli
+# dotfiles CLI
 
-An agent-friendly self-describing CLI to manage your dotfiles. Go port of
-[dreikanter/dotfiles](https://github.com/dreikanter/dotfiles).
-
-The CLI keeps a JSON manifest of paths to manage and copies files (no symlinks)
-between your live environment and a checked-in mirror inside a git repository.
+An agent-friendly self-describing CLI to manage your dotfiles. Files are
+copied (no symlinks) between your live environment and a checked-in mirror in
+a git repository.
 
 ## Install
 
 ```sh
-make install     # builds and installs to ~/go/bin/dotfiles
-make build       # builds local ./dotfiles binary
+go install github.com/dreikanter/dotfiles-cli/cmd/dotfiles@latest
 ```
+
+This installs the `dotfiles` binary into `$GOBIN` (default `~/go/bin`); make
+sure that directory is on your `PATH`.
 
 ## Manifest
 
