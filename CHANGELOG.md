@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.0.1] - 2026-05-04
+
 ### Added
 
 - `dotfiles init` command that scaffolds a fresh dotfiles repository: creates the target directory, an empty `dotfiles.json`, a short `README.md` written for the dotfiles user, and runs `git init`. Honors `--dry-run`, `--json`, `--verbose`; pass `--force` to overwrite existing `dotfiles.json` / `README.md`.
