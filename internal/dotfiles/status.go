@@ -11,12 +11,12 @@ import (
 type State string
 
 const (
-	StateInSync         State = "in-sync"
-	StateLocalMissing   State = "local-copy-missing"
-	StateDotfileMissing State = "dotfile-missing"
-	StateLocalChanges   State = "local-changes"
-	StateDotfileChanges State = "dotfile-changes"
-	StateNeitherExists  State = "neither-exists"
+	StateInSync           State = "in-sync"
+	StateInstalledMissing State = "installed-missing"
+	StateSavedMissing     State = "saved-missing"
+	StateInstalledChanges State = "installed-changes"
+	StateSavedChanges     State = "saved-changes"
+	StateNeitherExists    State = "neither-exists"
 )
 
 // Display returns the human-readable form of the state, suitable for
@@ -27,13 +27,13 @@ func (s State) Display() string {
 
 // StatusEntry is the comparison result for one Entry.
 type StatusEntry struct {
-	Tool    string `json:"tool"`
-	Local   string `json:"local"`
-	Dotfile string `json:"dotfile"`
-	State   State  `json:"state"`
+	Tool      string `json:"tool"`
+	Installed string `json:"installed"`
+	Saved     string `json:"saved"`
+	State     State  `json:"state"`
 }
 
-// Status compares each entry's local and dotfile files and returns one
+// Status compares each entry's installed and saved files and returns one
 // StatusEntry per entry, in the order produced by ExpandAll.
 func Status(specs []Spec) ([]StatusEntry, error) {
 	entries, err := ExpandAllUnion(specs)
@@ -43,44 +43,44 @@ func Status(specs []Spec) ([]StatusEntry, error) {
 	out := make([]StatusEntry, 0, len(entries))
 	for _, e := range entries {
 		out = append(out, StatusEntry{
-			Tool:    e.Tool,
-			Local:   e.Local,
-			Dotfile: e.Dotfile,
-			State:   compare(e.Local, e.Dotfile),
+			Tool:      e.Tool,
+			Installed: e.Installed,
+			Saved:     e.Saved,
+			State:     compare(e.Installed, e.Saved),
 		})
 	}
 	return out, nil
 }
 
-func compare(local, dotfile string) State {
-	li, lerr := os.Stat(local)
-	di, derr := os.Stat(dotfile)
+func compare(installed, saved string) State {
+	li, lerr := os.Stat(installed)
+	di, derr := os.Stat(saved)
 	switch {
 	case os.IsNotExist(lerr) && os.IsNotExist(derr):
 		return StateNeitherExists
 	case os.IsNotExist(lerr):
-		return StateLocalMissing
+		return StateInstalledMissing
 	case os.IsNotExist(derr):
-		return StateDotfileMissing
+		return StateSavedMissing
 	case lerr != nil || derr != nil:
 		return StateNeitherExists
 	}
 	if li.IsDir() || di.IsDir() {
 		return StateInSync // directories are not compared as units
 	}
-	lb, err := os.ReadFile(local)
+	lb, err := os.ReadFile(installed)
 	if err != nil {
-		return StateLocalMissing
+		return StateInstalledMissing
 	}
-	db, err := os.ReadFile(dotfile)
+	db, err := os.ReadFile(saved)
 	if err != nil {
-		return StateDotfileMissing
+		return StateSavedMissing
 	}
 	if bytes.Equal(lb, db) {
 		return StateInSync
 	}
 	if li.ModTime().After(di.ModTime()) {
-		return StateLocalChanges
+		return StateInstalledChanges
 	}
-	return StateDotfileChanges
+	return StateSavedChanges
 }

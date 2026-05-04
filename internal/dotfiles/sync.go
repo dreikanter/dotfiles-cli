@@ -14,10 +14,11 @@ import (
 type Direction int
 
 const (
-	// DirSave copies from the live filesystem into the dotfiles repository.
+	// DirSave copies installed files into the dotfiles repository.
 	DirSave Direction = iota
-	// DirApply copies from the dotfiles repository to the live filesystem.
-	DirApply
+	// DirInstall copies repository files into the installed locations on the
+	// live filesystem.
+	DirInstall
 )
 
 // Options controls Sync behavior.
@@ -48,8 +49,8 @@ type Result struct {
 }
 
 // Sync copies files for the given specs in the chosen direction. When Prune is
-// set in DirApply mode, files in the destination tree that are not declared by
-// the manifest are removed.
+// set in DirInstall mode, files in the destination tree that are not declared
+// by the manifest are removed.
 func Sync(specs []Spec, dir Direction, opts Options) (Result, error) {
 	if opts.Out == nil {
 		opts.Out = io.Discard
@@ -60,8 +61,8 @@ func Sync(specs []Spec, dir Direction, opts Options) (Result, error) {
 	}
 	res := Result{Actions: []Action{}}
 	for _, e := range entries {
-		src, dst := e.Local, e.Dotfile
-		if dir == DirApply {
+		src, dst := e.Installed, e.Saved
+		if dir == DirInstall {
 			src, dst = dst, src
 		}
 		changed, err := copyOne(src, dst, opts)
@@ -232,9 +233,9 @@ func destinationSet(specs []Spec, dir Direction) (map[string]struct{}, []string)
 		if !s.IsDir {
 			continue
 		}
-		destRoot := s.DotfileRoot
-		if dir == DirApply {
-			destRoot = s.LocalRoot
+		destRoot := s.SavedRoot
+		if dir == DirInstall {
+			destRoot = s.InstalledRoot
 		}
 		dirs = append(dirs, destRoot)
 		entries, err := ExpandSource(s, dir)
@@ -243,9 +244,9 @@ func destinationSet(specs []Spec, dir Direction) (map[string]struct{}, []string)
 		}
 		for _, e := range entries {
 			if dir == DirSave {
-				expected[e.Dotfile] = struct{}{}
+				expected[e.Saved] = struct{}{}
 			} else {
-				expected[e.Local] = struct{}{}
+				expected[e.Installed] = struct{}{}
 			}
 		}
 	}

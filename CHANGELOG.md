@@ -8,7 +8,11 @@
 
 ### Changed
 
-- `--prune`/`-p`, `--verbose`/`-v`, and `--dry-run`/`-n` are no longer global flags; they are now declared only on the commands that consume them (`--prune` on `save`/`apply`; `--verbose` and `--dry-run` on `save`/`apply`/`init`). `status` and `config` no longer accept these flags. As a side effect, `dotfiles -v` now prints the version.
+- The two sides of every sync are now called `installed` (the live config in your environment) and `saved` (the copy in the dotfiles repository), replacing the previous `local`/`dotfile` terminology. This affects: status state values (`installed-missing`, `saved-missing`, `installed-changes`, `saved-changes`), `status --json` and `config --json` per-entry fields (`installed`, `saved`), and plain-text headers for `save`/`install`. Closes [#14].
+- Renamed the `apply` command to `install`. The `load` alias is dropped.
+- `--prune`/`-p`, `--verbose`/`-v`, and `--dry-run`/`-n` are no longer global flags; they are now declared only on the commands that consume them (`--prune` on `save`/`install`; `--verbose` and `--dry-run` on `save`/`install`/`init`). `status` and `config` no longer accept these flags. As a side effect, `dotfiles -v` now prints the version.
+
+[#14]: https://github.com/dreikanter/dotfiles-cli/issues/14
 
 ## [0.1.2] - 2026-05-04
 

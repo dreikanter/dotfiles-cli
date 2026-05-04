@@ -17,8 +17,8 @@ func TestResolver_SingleFile(t *testing.T) {
 	specs := r.Resolve(Manifest{"git": {"~/.gitconfig"}})
 	require.Len(t, specs, 1)
 	assert.Equal(t, "git", specs[0].Tool)
-	assert.Equal(t, filepath.Join(home, ".gitconfig"), specs[0].LocalRoot)
-	assert.Equal(t, filepath.Join(repo, "config/git/.gitconfig"), specs[0].DotfileRoot)
+	assert.Equal(t, filepath.Join(home, ".gitconfig"), specs[0].InstalledRoot)
+	assert.Equal(t, filepath.Join(repo, "config/git/.gitconfig"), specs[0].SavedRoot)
 	assert.False(t, specs[0].IsDir)
 }
 
@@ -29,8 +29,8 @@ func TestResolver_MultipleFilesShareCommonRoot(t *testing.T) {
 
 	specs := r.Resolve(Manifest{"shell": {"~/.zshrc", "~/.zprofile"}})
 	require.Len(t, specs, 2)
-	assert.Equal(t, filepath.Join(repo, "config/shell/.zshrc"), specs[0].DotfileRoot)
-	assert.Equal(t, filepath.Join(repo, "config/shell/.zprofile"), specs[1].DotfileRoot)
+	assert.Equal(t, filepath.Join(repo, "config/shell/.zshrc"), specs[0].SavedRoot)
+	assert.Equal(t, filepath.Join(repo, "config/shell/.zprofile"), specs[1].SavedRoot)
 }
 
 func TestResolver_DirectoryByTrailingSlash(t *testing.T) {
@@ -41,8 +41,8 @@ func TestResolver_DirectoryByTrailingSlash(t *testing.T) {
 	specs := r.Resolve(Manifest{"nvim": {"~/.config/nvim/"}})
 	require.Len(t, specs, 1)
 	assert.True(t, specs[0].IsDir)
-	assert.Equal(t, filepath.Join(home, ".config/nvim"), specs[0].LocalRoot)
-	assert.Equal(t, filepath.Join(repo, "config/nvim"), specs[0].DotfileRoot)
+	assert.Equal(t, filepath.Join(home, ".config/nvim"), specs[0].InstalledRoot)
+	assert.Equal(t, filepath.Join(repo, "config/nvim"), specs[0].SavedRoot)
 }
 
 func TestResolver_DirectoryDetectedOnDisk(t *testing.T) {
@@ -71,32 +71,32 @@ func TestResolver_MultiTool_DeterministicOrder(t *testing.T) {
 }
 
 func TestExpand_File(t *testing.T) {
-	es, err := ExpandUnion(Spec{Tool: "git", LocalRoot: "/x/.gitconfig", DotfileRoot: "/r/config/git/.gitconfig"})
+	es, err := ExpandUnion(Spec{Tool: "git", InstalledRoot: "/x/.gitconfig", SavedRoot: "/r/config/git/.gitconfig"})
 	require.NoError(t, err)
 	require.Len(t, es, 1)
-	assert.Equal(t, "/x/.gitconfig", es[0].Local)
-	assert.Equal(t, "/r/config/git/.gitconfig", es[0].Dotfile)
+	assert.Equal(t, "/x/.gitconfig", es[0].Installed)
+	assert.Equal(t, "/r/config/git/.gitconfig", es[0].Saved)
 }
 
 func TestExpand_DirUnion(t *testing.T) {
 	home := t.TempDir()
 	repo := t.TempDir()
-	localRoot := filepath.Join(home, ".config/nvim")
-	dotfileRoot := filepath.Join(repo, "config/nvim")
+	installedRoot := filepath.Join(home, ".config/nvim")
+	savedRoot := filepath.Join(repo, "config/nvim")
 
-	require.NoError(t, os.MkdirAll(filepath.Join(localRoot, "lua"), 0o755))
-	require.NoError(t, os.WriteFile(filepath.Join(localRoot, "init.lua"), []byte("x"), 0o644))
-	require.NoError(t, os.WriteFile(filepath.Join(localRoot, "lua/plugins.lua"), []byte("y"), 0o644))
+	require.NoError(t, os.MkdirAll(filepath.Join(installedRoot, "lua"), 0o755))
+	require.NoError(t, os.WriteFile(filepath.Join(installedRoot, "init.lua"), []byte("x"), 0o644))
+	require.NoError(t, os.WriteFile(filepath.Join(installedRoot, "lua/plugins.lua"), []byte("y"), 0o644))
 
-	require.NoError(t, os.MkdirAll(dotfileRoot, 0o755))
-	require.NoError(t, os.WriteFile(filepath.Join(dotfileRoot, "extra.lua"), []byte("z"), 0o644))
+	require.NoError(t, os.MkdirAll(savedRoot, 0o755))
+	require.NoError(t, os.WriteFile(filepath.Join(savedRoot, "extra.lua"), []byte("z"), 0o644))
 
-	es, err := ExpandUnion(Spec{Tool: "nvim", LocalRoot: localRoot, DotfileRoot: dotfileRoot, IsDir: true})
+	es, err := ExpandUnion(Spec{Tool: "nvim", InstalledRoot: installedRoot, SavedRoot: savedRoot, IsDir: true})
 	require.NoError(t, err)
 	require.Len(t, es, 3)
 	rels := []string{}
 	for _, e := range es {
-		rel, _ := filepath.Rel(localRoot, e.Local)
+		rel, _ := filepath.Rel(installedRoot, e.Installed)
 		rels = append(rels, rel)
 	}
 	assert.Equal(t, []string{"extra.lua", "init.lua", "lua/plugins.lua"}, rels)

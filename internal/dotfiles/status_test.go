@@ -20,37 +20,37 @@ func TestStatus_AllStates(t *testing.T) {
 	require.NoError(t, os.MkdirAll(filepath.Join(repo, "config/a"), 0o755))
 	require.NoError(t, os.WriteFile(filepath.Join(repo, "config/a/.synced"), []byte("same"), 0o644))
 
-	// local missing (only dotfile exists)
+	// installed missing (only saved copy exists)
 	require.NoError(t, os.MkdirAll(filepath.Join(repo, "config/b"), 0o755))
-	require.NoError(t, os.WriteFile(filepath.Join(repo, "config/b/.localmiss"), []byte("x"), 0o644))
+	require.NoError(t, os.WriteFile(filepath.Join(repo, "config/b/.instmiss"), []byte("x"), 0o644))
 
-	// dotfile missing (only local exists)
-	require.NoError(t, os.WriteFile(filepath.Join(home, ".dotmiss"), []byte("x"), 0o644))
+	// saved missing (only installed copy exists)
+	require.NoError(t, os.WriteFile(filepath.Join(home, ".savedmiss"), []byte("x"), 0o644))
 
-	// local newer
-	localNewer := filepath.Join(home, ".localnewer")
-	repoOlder := filepath.Join(repo, "config/d/.localnewer")
-	require.NoError(t, os.MkdirAll(filepath.Dir(repoOlder), 0o755))
-	require.NoError(t, os.WriteFile(localNewer, []byte("new"), 0o644))
-	require.NoError(t, os.WriteFile(repoOlder, []byte("old"), 0o644))
+	// installed newer
+	installedNewer := filepath.Join(home, ".instnewer")
+	savedOlder := filepath.Join(repo, "config/d/.instnewer")
+	require.NoError(t, os.MkdirAll(filepath.Dir(savedOlder), 0o755))
+	require.NoError(t, os.WriteFile(installedNewer, []byte("new"), 0o644))
+	require.NoError(t, os.WriteFile(savedOlder, []byte("old"), 0o644))
 	old := time.Now().Add(-2 * time.Hour)
-	require.NoError(t, os.Chtimes(repoOlder, old, old))
+	require.NoError(t, os.Chtimes(savedOlder, old, old))
 
-	// dotfile newer
-	localOlder := filepath.Join(home, ".dotnewer")
-	repoNewer := filepath.Join(repo, "config/e/.dotnewer")
-	require.NoError(t, os.MkdirAll(filepath.Dir(repoNewer), 0o755))
-	require.NoError(t, os.WriteFile(localOlder, []byte("old"), 0o644))
-	require.NoError(t, os.WriteFile(repoNewer, []byte("new"), 0o644))
-	require.NoError(t, os.Chtimes(localOlder, old, old))
+	// saved newer
+	installedOlder := filepath.Join(home, ".savednewer")
+	savedNewer := filepath.Join(repo, "config/e/.savednewer")
+	require.NoError(t, os.MkdirAll(filepath.Dir(savedNewer), 0o755))
+	require.NoError(t, os.WriteFile(installedOlder, []byte("old"), 0o644))
+	require.NoError(t, os.WriteFile(savedNewer, []byte("new"), 0o644))
+	require.NoError(t, os.Chtimes(installedOlder, old, old))
 
 	// neither exists
 	specs := r.Resolve(Manifest{
 		"a": {"~/.synced"},
-		"b": {"~/.localmiss"},
-		"c": {"~/.dotmiss"},
-		"d": {"~/.localnewer"},
-		"e": {"~/.dotnewer"},
+		"b": {"~/.instmiss"},
+		"c": {"~/.savedmiss"},
+		"d": {"~/.instnewer"},
+		"e": {"~/.savednewer"},
 		"f": {"~/.absent"},
 	})
 
@@ -61,9 +61,9 @@ func TestStatus_AllStates(t *testing.T) {
 		byTool[e.Tool] = e.State
 	}
 	assert.Equal(t, StateInSync, byTool["a"])
-	assert.Equal(t, StateLocalMissing, byTool["b"])
-	assert.Equal(t, StateDotfileMissing, byTool["c"])
-	assert.Equal(t, StateLocalChanges, byTool["d"])
-	assert.Equal(t, StateDotfileChanges, byTool["e"])
+	assert.Equal(t, StateInstalledMissing, byTool["b"])
+	assert.Equal(t, StateSavedMissing, byTool["c"])
+	assert.Equal(t, StateInstalledChanges, byTool["d"])
+	assert.Equal(t, StateSavedChanges, byTool["e"])
 	assert.Equal(t, StateNeitherExists, byTool["f"])
 }

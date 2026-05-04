@@ -43,23 +43,22 @@ recursively). Files mirror to `<repo>/config/<tool>/<rel>`.
 ## Commands
 
 - `dotfiles init` — scaffold a fresh dotfiles repository
-- `dotfiles save` — copy local files into the dotfiles repository
-- `dotfiles apply` — copy repository files into the local environment (alias: `load`)
+- `dotfiles save` — copy installed files into the dotfiles repository
+- `dotfiles install` — copy repository files into their installed locations
 - `dotfiles status` — print files that are out of sync (alias: `ls`)
-- `dotfiles config` — print the resolved dotfile-to-local mapping
+- `dotfiles config` — print the resolved installed-to-saved mapping
 
 ### Flags
 
 These flags are accepted by every command:
 
-- `-n, --dry-run` — preview without writing
-- `-v, --verbose` — log each file action (ignored with `--json`)
 - `--json` — emit a single JSON object on stdout instead of plain text (see [JSON output](#json-output))
 - `--root <path>` — repository root (default `$DOTFILES_ROOT` or `~/.dotfiles`)
 - `--config <path>` — manifest path (default `$DOTFILES_CONFIG` or `<root>/dotfiles.json`)
 
-Command-specific flags (`--tool`, `--file`, `--prune`, `--force`) are shown in
-the Usage examples below; run `dotfiles <command> --help` for the full list.
+Command-specific flags (`-n, --dry-run`, `-v, --verbose`, `-p, --prune`,
+`--tool`, `--file`, `--force`) are shown in the Usage examples below; run
+`dotfiles <command> --help` for the full list.
 
 ## Usage
 
@@ -76,8 +75,8 @@ tree ~/.dotfiles
 # Re-scaffold an existing repository, overwriting dotfiles.json and README.md
 dotfiles init --force
 
-# Apply the manifest to the local environment
-dotfiles apply
+# Install the manifest into the live environment
+dotfiles install
 
 # Save a single tool's files
 dotfiles save --tool git
@@ -91,7 +90,7 @@ dotfiles save --prune
 # Report which managed files are out of sync
 dotfiles status
 
-# Print the resolved dotfile-to-local mapping
+# Print the resolved installed-to-saved mapping
 dotfiles config
 # Root: /home/user/.dotfiles
 # Config: /home/user/.dotfiles/dotfiles.json
@@ -123,8 +122,8 @@ prints a structured report:
   "entries": [
     {
       "tool": "git",
-      "local": "/home/user/.gitconfig",
-      "dotfile": "/home/user/.dotfiles/config/git/.gitconfig",
+      "installed": "/home/user/.gitconfig",
+      "saved": "/home/user/.dotfiles/config/git/.gitconfig",
       "state": "in-sync"
     }
   ],

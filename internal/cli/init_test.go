@@ -42,7 +42,7 @@ func TestCLI_Init_CreatesArtifacts(t *testing.T) {
 
 	readme, err := os.ReadFile(filepath.Join(root, "README.md"))
 	require.NoError(t, err)
-	assert.Contains(t, string(readme), "dotfiles apply")
+	assert.Contains(t, string(readme), "dotfiles install")
 	assert.Contains(t, string(readme), "Manifest format")
 
 	st, err := os.Stat(filepath.Join(root, ".git"))

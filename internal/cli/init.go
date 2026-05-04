@@ -49,7 +49,7 @@ const initReadmeTemplate = "# Dotfiles\n" +
 	"```sh\n" +
 	"git clone <this-repo-url> ~/.dotfiles\n" +
 	"go install github.com/dreikanter/dotfiles-cli/cmd/dotfiles@latest\n" +
-	"dotfiles apply\n" +
+	"dotfiles install\n" +
 	"```\n" +
 	"\n" +
 	"## Save local changes\n" +
@@ -65,7 +65,7 @@ const initReadmeTemplate = "# Dotfiles\n" +
 	"\n" +
 	"```sh\n" +
 	"git -C ~/.dotfiles pull\n" +
-	"dotfiles apply\n" +
+	"dotfiles install\n" +
 	"```\n" +
 	"\n" +
 	"## Manifest format\n" +
