@@ -49,6 +49,9 @@ Rules:
 - Keep an `## [Unreleased]` section at the top.
 - PRs with user-visible changes should add an entry under `Unreleased`.
 - Internal-only PRs may skip the changelog.
+- Write entries for the tool user, not the tool developer. Capture the
+  high-level conceptual change and skip implementation details (file paths,
+  internal symbols, refactors, test updates).
 - Do not create a new version heading in regular PRs.
 - A release PR converts `Unreleased` into `## [X.Y.Z] - YYYY-MM-DD` and adds a
   fresh empty `## [Unreleased]` section above it.

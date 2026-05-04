@@ -4,7 +4,7 @@
 
 ### Changed
 
-- `status` reports the in-sync state as `synced` (previously `in sync`) in JSON output and the plain-text summary.
+- Renamed the in-sync status label from `in sync` to `synced`.
 
 ## [0.1.1] - 2026-05-04
 
