@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-05-04
+
 ### Changed
 
 - README rewritten for clarity: `Manifest` section replaced with a practical `Setup` section pointing at `dotfiles init`, command table converted to a list, `Flags` narrowed to flags common to every command, and command-specific flags moved into the Usage examples.
