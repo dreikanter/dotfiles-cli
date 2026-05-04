@@ -102,6 +102,10 @@ func runSync(cmd *cobra.Command, dir dotfiles.Direction, name, header string) er
 		if actions == nil {
 			actions = []dotfiles.Action{}
 		}
+		filter, err := buildFilter(sel)
+		if err != nil {
+			return handleErr(cmd, err)
+		}
 		if writeErr := writeJSON(out, syncResponse{
 			Direction: name,
 			DryRun:    dryRun,
@@ -109,7 +113,7 @@ func runSync(cmd *cobra.Command, dir dotfiles.Direction, name, header string) er
 			Unchanged: res.Unchanged,
 			Removed:   res.Removed,
 			Errors:    res.Errors,
-			Filter:    buildFilter(sel),
+			Filter:    filter,
 			Actions:   actions,
 		}); writeErr != nil {
 			return writeErr
@@ -149,10 +153,13 @@ func formatSyncHeader(header string, sel dotfiles.Selector, dry bool) string {
 	return b.String()
 }
 
-func buildFilter(sel dotfiles.Selector) *syncFilter {
+func buildFilter(sel dotfiles.Selector) (*syncFilter, error) {
 	if sel.IsEmpty() {
-		return nil
+		return nil, nil
 	}
-	home, _ := os.UserHomeDir()
-	return &syncFilter{Tool: sel.Tool, Files: sel.ResolvedFiles(home)}
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return nil, fmt.Errorf("resolve home dir: %w", err)
+	}
+	return &syncFilter{Tool: sel.Tool, Files: sel.ResolvedFiles(home)}, nil
 }
