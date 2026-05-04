@@ -103,11 +103,16 @@ func TestSelector_Apply_FileDuplicatesDeduped(t *testing.T) {
 }
 
 func TestSelector_Apply_FileCWDRelative(t *testing.T) {
-	dir := t.TempDir()
 	cwd, err := os.Getwd()
 	require.NoError(t, err)
 	defer func() { _ = os.Chdir(cwd) }()
-	require.NoError(t, os.Chdir(dir))
+	require.NoError(t, os.Chdir(t.TempDir()))
+
+	// Use Getwd's canonical form: on macOS t.TempDir() returns a path under
+	// /var/folders/... which is a symlink to /private/var/folders/...; Getwd
+	// reports the resolved form, which is what filepath.Abs joins against.
+	dir, err := os.Getwd()
+	require.NoError(t, err)
 
 	specs := []Spec{{Tool: "x", LocalRoot: filepath.Join(dir, "f"), DotfileRoot: "/repo/config/x/f"}}
 	got, err := Selector{Tool: "x", Files: []string{"f"}}.Apply(specs, "/nope")
