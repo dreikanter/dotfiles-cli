@@ -82,7 +82,10 @@ dotfiles save --tool git --file ~/.gitconfig --file ~/.gitignore_global
 # Save and remove destination files no longer in the manifest
 dotfiles save --prune
 
-# Preview the same scope
+# Report which managed files are out of sync (not a preview — reads on-disk state)
+dotfiles status
+
+# Scope status and config to a single tool or files
 dotfiles status --tool git --file ~/.gitconfig
 dotfiles config --tool git
 
