@@ -180,7 +180,7 @@ func writeInitFile(path, content string, dryRun, force bool, logOut io.Writer) (
 }
 
 func initGit(gitPath, root, gitDir string, dryRun bool, logOut io.Writer) (initAction, error) {
-	if existsDir(gitDir) {
+	if st, err := os.Stat(gitDir); err == nil && st.IsDir() {
 		fmt.Fprintf(logOut, "git already initialized in %s\n", root)
 		return initAction{Action: "git-skip", Path: gitDir, Message: "already initialized"}, nil
 	}
@@ -200,9 +200,4 @@ func initGit(gitPath, root, gitDir string, dryRun bool, logOut io.Writer) (initA
 func existsFile(p string) bool {
 	st, err := os.Stat(p)
 	return err == nil && !st.IsDir()
-}
-
-func existsDir(p string) bool {
-	st, err := os.Stat(p)
-	return err == nil && st.IsDir()
 }
