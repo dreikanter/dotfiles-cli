@@ -89,42 +89,45 @@ func copyOne(src, dst string, opts Options) error {
 	info, err := os.Stat(src)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return fmt.Errorf("source missing")
+			return fmt.Errorf("source missing: %s", src)
 		}
-		return err
+		return fmt.Errorf("stat %s: %w", src, err)
 	}
 	if info.IsDir() {
-		return fmt.Errorf("source is a directory")
+		return fmt.Errorf("source is a directory: %s", src)
 	}
 	if opts.DryRun {
 		return nil
 	}
 	if err := os.MkdirAll(filepath.Dir(dst), 0o755); err != nil {
-		return err
+		return fmt.Errorf("mkdir %s: %w", filepath.Dir(dst), err)
 	}
 	// Replace any existing symlink with a real file copy.
 	if li, err := os.Lstat(dst); err == nil && li.Mode()&fs.ModeSymlink != 0 {
 		if rmErr := os.Remove(dst); rmErr != nil {
-			return rmErr
+			return fmt.Errorf("remove existing symlink %s: %w", dst, rmErr)
 		}
 	}
 	in, err := os.Open(src)
 	if err != nil {
-		return err
+		return fmt.Errorf("open %s: %w", src, err)
 	}
 	defer in.Close()
 	out, err := os.OpenFile(dst, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, info.Mode().Perm())
 	if err != nil {
-		return err
+		return fmt.Errorf("create %s: %w", dst, err)
 	}
 	if _, err := io.Copy(out, in); err != nil {
 		out.Close()
-		return err
+		return fmt.Errorf("copy %s -> %s: %w", src, dst, err)
 	}
 	if err := out.Close(); err != nil {
-		return err
+		return fmt.Errorf("close %s: %w", dst, err)
 	}
-	return os.Chtimes(dst, info.ModTime(), info.ModTime())
+	if err := os.Chtimes(dst, info.ModTime(), info.ModTime()); err != nil {
+		return fmt.Errorf("set timestamps on %s: %w", dst, err)
+	}
+	return nil
 }
 
 // prune removes files under destination roots that are not declared by the
@@ -138,11 +141,11 @@ func prune(specs []Spec, dir Direction, opts Options) (int, []Action, error) {
 			if os.IsNotExist(err) {
 				continue
 			}
-			return removed, actions, err
+			return removed, actions, fmt.Errorf("stat %s: %w", root, err)
 		}
 		err := filepath.WalkDir(root, func(p string, d fs.DirEntry, err error) error {
 			if err != nil {
-				return err
+				return fmt.Errorf("walk %s: %w", p, err)
 			}
 			if d.IsDir() {
 				return nil
@@ -159,7 +162,7 @@ func prune(specs []Spec, dir Direction, opts Options) (int, []Action, error) {
 				return nil
 			}
 			if rmErr := os.Remove(p); rmErr != nil {
-				return rmErr
+				return fmt.Errorf("remove %s: %w", p, rmErr)
 			}
 			removed++
 			actions = append(actions, Action{Action: "prune", Path: p})

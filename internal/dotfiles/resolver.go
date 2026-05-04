@@ -1,6 +1,7 @@
 package dotfiles
 
 import (
+	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -163,21 +164,21 @@ func walkFiles(root string, set map[string]struct{}) error {
 		if os.IsNotExist(err) {
 			return nil
 		}
-		return err
+		return fmt.Errorf("stat %s: %w", root, err)
 	}
 	if !info.IsDir() {
 		return nil
 	}
 	return filepath.WalkDir(root, func(p string, d fs.DirEntry, err error) error {
 		if err != nil {
-			return err
+			return fmt.Errorf("walk %s: %w", p, err)
 		}
 		if d.IsDir() {
 			return nil
 		}
 		rel, err := filepath.Rel(root, p)
 		if err != nil {
-			return err
+			return fmt.Errorf("relative path %s under %s: %w", p, root, err)
 		}
 		set[rel] = struct{}{}
 		return nil

@@ -18,7 +18,7 @@ type Manifest map[string][]string
 func LoadManifest(path string) (Manifest, error) {
 	b, err := os.ReadFile(path)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("read %s: %w", path, err)
 	}
 	var m Manifest
 	if err := json.Unmarshal(b, &m); err != nil {

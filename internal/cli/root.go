@@ -29,12 +29,11 @@ var (
 var rootCmd = &cobra.Command{
 	Use:   "dotfiles",
 	Short: "Manage your dotfiles by syncing local config with a checked-in mirror",
-	Long: `dotfiles synchronizes a set of local configuration files with a mirror kept
-inside a git repository. The list of managed paths is declared in a JSON
-manifest. Files are copied (not symlinked) in either direction.
+	Long: `Manage your dotfiles by syncing local config with a checked-in mirror.
 
-Pass --json to any command to receive a single JSON object on stdout. The
-exit code is still non-zero on failure; --verbose is ignored in JSON mode.`,
+Tracks a set of local configuration files declared in a JSON manifest and
+copies (not symlinks) them between the live filesystem and a git-managed
+mirror.`,
 	SilenceUsage:  true,
 	SilenceErrors: true,
 }
@@ -55,7 +54,7 @@ func init() {
 	rootCmd.PersistentFlags().BoolVarP(&dryRun, "dry-run", "n", false, "preview actions without writing")
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "log every file action (ignored when --json is set)")
 	rootCmd.PersistentFlags().BoolVarP(&prune, "prune", "p", false, "remove destination files not in the manifest")
-	rootCmd.PersistentFlags().BoolVar(&jsonOutput, "json", false, "emit a single JSON object on stdout instead of plain text")
+	rootCmd.PersistentFlags().BoolVar(&jsonOutput, "json", false, "emit a single JSON object on stdout (non-zero exit on failure)")
 }
 
 // Execute runs the CLI and exits the process with an appropriate status code.
@@ -88,11 +87,15 @@ func resolveRoot() (string, error) {
 	if r == "" {
 		home, err := os.UserHomeDir()
 		if err != nil {
-			return "", err
+			return "", fmt.Errorf("resolve home dir: %w", err)
 		}
 		r = filepath.Join(home, ".dotfiles")
 	}
-	return filepath.Abs(r)
+	abs, err := filepath.Abs(r)
+	if err != nil {
+		return "", fmt.Errorf("resolve absolute path of %s: %w", r, err)
+	}
+	return abs, nil
 }
 
 // resolveManifest returns the absolute manifest path.
@@ -104,7 +107,11 @@ func resolveManifest(root string) (string, error) {
 	if m == "" {
 		m = filepath.Join(root, "dotfiles.json")
 	}
-	return filepath.Abs(m)
+	abs, err := filepath.Abs(m)
+	if err != nil {
+		return "", fmt.Errorf("resolve absolute path of %s: %w", m, err)
+	}
+	return abs, nil
 }
 
 // loadSpecs resolves the manifest and filters specs through sel. Validation
@@ -125,7 +132,7 @@ func loadSpecs(sel dotfiles.Selector) ([]dotfiles.Spec, error) {
 	}
 	home, err := os.UserHomeDir()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("resolve home dir: %w", err)
 	}
 	r := dotfiles.Resolver{RepoRoot: root, Home: home}
 	return sel.Apply(r.Resolve(m), home)
