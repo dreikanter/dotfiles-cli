@@ -109,6 +109,8 @@ is reused. An existing .git directory is left alone.
 
 func init() {
 	initCmd.Flags().BoolVar(&forceInit, "force", false, "overwrite dotfiles.json and README.md if they exist")
+	initCmd.Flags().BoolVarP(&dryRun, "dry-run", "n", false, "preview actions without writing")
+	initCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "log every file action (ignored when --json is set)")
 	rootCmd.AddCommand(initCmd)
 }
 

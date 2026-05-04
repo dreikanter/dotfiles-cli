@@ -51,9 +51,6 @@ func init() {
 
 	rootCmd.PersistentFlags().StringVar(&rootPath, "root", "", "dotfiles repository root (default: $DOTFILES_ROOT or ~/.dotfiles)")
 	rootCmd.PersistentFlags().StringVar(&manifestPath, "config", "", "manifest file path (default: <root>/dotfiles.json or $DOTFILES_CONFIG)")
-	rootCmd.PersistentFlags().BoolVarP(&dryRun, "dry-run", "n", false, "preview actions without writing")
-	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "log every file action (ignored when --json is set)")
-	rootCmd.PersistentFlags().BoolVarP(&prune, "prune", "p", false, "remove destination files not in the manifest")
 	rootCmd.PersistentFlags().BoolVar(&jsonOutput, "json", false, "emit a single JSON object on stdout (non-zero exit on failure)")
 }
 
