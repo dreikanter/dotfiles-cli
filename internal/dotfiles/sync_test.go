@@ -149,23 +149,6 @@ func TestSync_DryRunReportsChanges(t *testing.T) {
 	assert.Equal(t, "[user]\n\tname = Alice\n", string(got))
 }
 
-func TestSync_PruneAlwaysReports(t *testing.T) {
-	home, repo, specs := scenario(t)
-	_ = home
-	_, err := Sync(specs, DirSave, Options{})
-	require.NoError(t, err)
-
-	stray := filepath.Join(repo, "config/nvim/leftover.lua")
-	require.NoError(t, os.WriteFile(stray, []byte("stale"), 0o644))
-
-	var buf bytes.Buffer
-	res, err := Sync(specs, DirSave, Options{Prune: true, Out: &buf})
-	require.NoError(t, err)
-	assert.Equal(t, 1, res.Removed)
-	assert.Contains(t, buf.String(), "prune ")
-	assert.Contains(t, buf.String(), stray)
-}
-
 func TestSync_ReplacesSymlink(t *testing.T) {
 	home, repo, specs := scenario(t)
 	_ = home
@@ -190,9 +173,12 @@ func TestSync_Prune(t *testing.T) {
 	stray := filepath.Join(repo, "config/nvim/leftover.lua")
 	require.NoError(t, os.WriteFile(stray, []byte("stale"), 0o644))
 
-	res, err := Sync(specs, DirSave, Options{Prune: true})
+	var buf bytes.Buffer
+	res, err := Sync(specs, DirSave, Options{Prune: true, Out: &buf})
 	require.NoError(t, err)
-	assert.GreaterOrEqual(t, res.Removed, 1)
+	assert.Equal(t, 1, res.Removed)
+	assert.Contains(t, buf.String(), "prune ")
+	assert.Contains(t, buf.String(), stray)
 	_, err = os.Stat(stray)
 	assert.True(t, os.IsNotExist(err))
 }
