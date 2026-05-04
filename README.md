@@ -45,7 +45,7 @@ recursively). Files mirror to `<repo>/config/<tool>/<rel>`.
 - `dotfiles init` — scaffold a fresh dotfiles repository
 - `dotfiles save` — copy tracked files into the dotfiles repository
 - `dotfiles install` — copy tracked files to their live paths
-- `dotfiles status` — print files that are out of sync (alias: `ls`)
+- `dotfiles status` — print files that are out of sync
 - `dotfiles config` — print the resolved live-to-saved mapping
 
 ### Flags

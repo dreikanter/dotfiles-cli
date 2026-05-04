@@ -10,9 +10,11 @@
 
 - The two sides of every sync are now called `live` (the file at the path each tool reads) and `saved` (the copy in the dotfiles repository), replacing the previous `local`/`dotfile` terminology. This affects: status state values (`live-missing`, `saved-missing`, `live-changes`, `saved-changes`), `status --json` and `config --json` per-entry fields (`live`, `saved`), and plain-text headers for `save`/`install`. Closes [#14].
 - Renamed the `apply` command to `install`. The `load` alias is dropped.
+- Dropped the `ls` alias for `status`; the command only lists out-of-sync files, so the `ls` shorthand was misleading. Closes [#17].
 - `--prune`/`-p`, `--verbose`/`-v`, and `--dry-run`/`-n` are no longer global flags; they are now declared only on the commands that consume them (`--prune` on `save`/`install`; `--verbose` and `--dry-run` on `save`/`install`/`init`). `status` and `config` no longer accept these flags. As a side effect, `dotfiles -v` now prints the version.
 
 [#14]: https://github.com/dreikanter/dotfiles-cli/issues/14
+[#17]: https://github.com/dreikanter/dotfiles-cli/issues/17
 
 ## [0.1.2] - 2026-05-04
 
