@@ -64,6 +64,18 @@ the Usage examples below; run `dotfiles <command> --help` for the full list.
 ## Usage
 
 ```sh
+# Scaffold a fresh dotfiles repository
+dotfiles init
+
+# Inspect what init generated
+tree ~/.dotfiles
+# ~/.dotfiles
+# ├── README.md
+# └── dotfiles.json
+
+# Re-scaffold an existing repository, overwriting dotfiles.json and README.md
+dotfiles init --force
+
 # Apply the manifest to the local environment
 dotfiles apply
 
@@ -83,18 +95,9 @@ dotfiles status
 dotfiles status --tool git --file ~/.gitconfig
 dotfiles config --tool git
 
-# Re-scaffold an existing repository, overwriting dotfiles.json and README.md
-dotfiles init --force
-
-# Inspect what init generated
-$ tree ~/.dotfiles
-~/.dotfiles
-├── README.md
-└── dotfiles.json
-
 # Run against a custom repository (handy for demos and testing)
-$ dotfiles --root ./testdata/sample-repo status
-5 files in sync
+dotfiles --root ./testdata/sample-repo status
+# 5 files in sync
 ```
 
 ## JSON output
