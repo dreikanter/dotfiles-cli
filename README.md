@@ -2,6 +2,8 @@
 
 An agent-friendly self-describing CLI to manage your [dotfiles](https://dotfiles.github.io/).
 
+![dotfiles workflow](docs/workflow.svg)
+
 ## Install
 
 Prerequisites: Go (1.25+) and `git`.
