@@ -42,8 +42,8 @@ func TestCLI_Init_CreatesArtifacts(t *testing.T) {
 
 	readme, err := os.ReadFile(filepath.Join(root, "README.md"))
 	require.NoError(t, err)
-	assert.Contains(t, string(readme), "dotfiles install")
-	assert.Contains(t, string(readme), "Manifest format")
+	assert.Contains(t, string(readme), "dotfiles-cli")
+	assert.Contains(t, string(readme), "dotfiles --help")
 
 	st, err := os.Stat(filepath.Join(root, ".git"))
 	require.NoError(t, err)
@@ -91,7 +91,7 @@ func TestCLI_Init_ForceOverwrites(t *testing.T) {
 	manifest, _ := os.ReadFile(filepath.Join(root, "dotfiles.json"))
 	assert.Equal(t, "{}\n", string(manifest))
 	readme, _ := os.ReadFile(filepath.Join(root, "README.md"))
-	assert.Contains(t, string(readme), "Manifest format")
+	assert.Contains(t, string(readme), "dotfiles --help")
 }
 
 func TestCLI_Init_ExistingGitLeftAlone(t *testing.T) {

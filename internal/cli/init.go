@@ -1,6 +1,7 @@
 package cli
 
 import (
+	_ "embed"
 	"fmt"
 	"io"
 	"os"
@@ -40,46 +41,8 @@ const initJSONShape = `JSON output shape:
     "actions": [{"action": "create"|"overwrite"|"skip"|"git-init"|"git-skip", "path", "message"}, ...]
   }`
 
-const initReadmeTemplate = "# Dotfiles\n" +
-	"\n" +
-	"Personal dotfiles managed with [dotfiles-cli](https://github.com/dreikanter/dotfiles-cli).\n" +
-	"\n" +
-	"## Bootstrap on a new system\n" +
-	"\n" +
-	"```sh\n" +
-	"git clone <this-repo-url> ~/.dotfiles\n" +
-	"go install github.com/dreikanter/dotfiles-cli/cmd/dotfiles@latest\n" +
-	"dotfiles install\n" +
-	"```\n" +
-	"\n" +
-	"## Save local changes\n" +
-	"\n" +
-	"```sh\n" +
-	"dotfiles save\n" +
-	"git -C ~/.dotfiles add -A\n" +
-	"git -C ~/.dotfiles commit -m \"update\"\n" +
-	"git -C ~/.dotfiles push\n" +
-	"```\n" +
-	"\n" +
-	"## Update from remote\n" +
-	"\n" +
-	"```sh\n" +
-	"git -C ~/.dotfiles pull\n" +
-	"dotfiles install\n" +
-	"```\n" +
-	"\n" +
-	"## Manifest format\n" +
-	"\n" +
-	"`dotfiles.json` maps tool names to lists of paths. A leading `~` expands to\n" +
-	"your home directory; a trailing `/` marks a directory tracked recursively.\n" +
-	"\n" +
-	"```json\n" +
-	"{\n" +
-	"  \"git\":   [\"~/.gitconfig\", \"~/.gitignore_global\"],\n" +
-	"  \"shell\": [\"~/.zshrc\"],\n" +
-	"  \"nvim\":  [\"~/.config/nvim/\"]\n" +
-	"}\n" +
-	"```\n"
+//go:embed templates/README.md
+var initReadmeTemplate string
 
 const initManifestTemplate = "{}\n"
 

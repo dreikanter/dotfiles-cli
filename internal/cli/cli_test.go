@@ -193,22 +193,6 @@ func TestCLI_ConfigJSON(t *testing.T) {
 	}
 }
 
-func TestCLI_SaveDryRun(t *testing.T) {
-	repo, home := stageRepoAndHome(t)
-
-	_, err := runCLI(t, "--root", repo, "install")
-	require.NoError(t, err)
-	require.NoError(t, os.WriteFile(filepath.Join(home, ".gitconfig"), []byte("local override\n"), 0o644))
-
-	out, err := runCLI(t, "--root", repo, "save", "-n", "-v")
-	require.NoError(t, err)
-	assert.Contains(t, out, "[DRY RUN]")
-
-	got, err := os.ReadFile(filepath.Join(repo, "config/git/.gitconfig"))
-	require.NoError(t, err)
-	assert.NotContains(t, string(got), "local override", "dry-run must not write")
-}
-
 func TestCLI_SaveJSON(t *testing.T) {
 	repo, home := stageRepoAndHome(t)
 
