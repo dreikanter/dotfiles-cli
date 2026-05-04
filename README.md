@@ -31,23 +31,41 @@ recursively). Files mirror to `<repo>/config/<tool>/<rel>`.
 
 ## Commands
 
-| Command                  | Action                                               |
-| ------------------------ | ---------------------------------------------------- |
-| `dotfiles save`          | Copy local files into the dotfiles repository.       |
-| `dotfiles apply`         | Copy repository files into the local environment.    |
-| `dotfiles status`        | Print files that are out of sync.                    |
-| `dotfiles status --json` | Same, machine-readable.                              |
-| `dotfiles config`        | Print the resolved dotfile-to-local mapping as JSON. |
+| Command           | Action                                            |
+| ----------------- | ------------------------------------------------- |
+| `dotfiles save`   | Copy local files into the dotfiles repository.    |
+| `dotfiles apply`  | Copy repository files into the local environment. |
+| `dotfiles status` | Print files that are out of sync.                 |
+| `dotfiles config` | Print the resolved dotfile-to-local mapping.      |
 
 `apply` has alias `load`; `status` has alias `ls`.
 
 ### Flags
 
 - `-n, --dry-run` — preview without writing
-- `-v, --verbose` — log each file action
+- `-v, --verbose` — log each file action (ignored with `--json`)
 - `-p, --prune` — remove destination files no longer in the manifest
+- `--json` — emit a single JSON object on stdout instead of plain text
 - `--root <path>` — repository root (default `$DOTFILES_ROOT` or `~/.dotfiles`)
 - `--config <path>` — manifest path (default `$DOTFILES_CONFIG` or `<root>/dotfiles.json`)
+
+## JSON output
+
+Pass `--json` to any command to receive a single JSON object on stdout. JSON
+output is never mixed with plain text and `--verbose` is ignored. The exit
+code is still non-zero on failure; failures emit an error envelope:
+
+```json
+{ "error": { "message": "load manifest: ..." } }
+```
+
+Per-command shapes are documented in `dotfiles <command> --help`. Use `jq` to
+extract specific fields:
+
+```sh
+dotfiles status --json | jq '.summary.unsynced'
+dotfiles save --json   | jq '.actions[] | select(.action=="error")'
+```
 
 ## Example
 

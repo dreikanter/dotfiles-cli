@@ -18,6 +18,7 @@ var (
 	dryRun       bool
 	verbose      bool
 	prune        bool
+	jsonOutput   bool
 
 	// Version is overridden at build time via -ldflags.
 	Version = "dev"
@@ -28,8 +29,12 @@ var rootCmd = &cobra.Command{
 	Short: "Manage your dotfiles by syncing local config with a checked-in mirror",
 	Long: `dotfiles synchronizes a set of local configuration files with a mirror kept
 inside a git repository. The list of managed paths is declared in a JSON
-manifest. Files are copied (not symlinked) in either direction.`,
-	SilenceUsage: true,
+manifest. Files are copied (not symlinked) in either direction.
+
+Pass --json to any command to receive a single JSON object on stdout. The
+exit code is still non-zero on failure; --verbose is ignored in JSON mode.`,
+	SilenceUsage:  true,
+	SilenceErrors: true,
 }
 
 func init() {
@@ -43,19 +48,30 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&rootPath, "root", "", "dotfiles repository root (default: $DOTFILES_ROOT or ~/.dotfiles)")
 	rootCmd.PersistentFlags().StringVar(&manifestPath, "config", "", "manifest file path (default: <root>/dotfiles.json or $DOTFILES_CONFIG)")
 	rootCmd.PersistentFlags().BoolVarP(&dryRun, "dry-run", "n", false, "preview actions without writing")
-	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "log every file action")
+	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "log every file action (ignored when --json is set)")
 	rootCmd.PersistentFlags().BoolVarP(&prune, "prune", "p", false, "remove destination files not in the manifest")
+	rootCmd.PersistentFlags().BoolVar(&jsonOutput, "json", false, "emit a single JSON object on stdout instead of plain text")
 }
 
 // Execute runs the CLI and exits the process with an appropriate status code.
 func Execute() {
-	if err := rootCmd.Execute(); err != nil {
-		var ee *exec.ExitError
-		if errors.As(err, &ee) {
-			os.Exit(ee.ExitCode())
-		}
+	err := rootCmd.Execute()
+	if err == nil {
+		return
+	}
+	if errors.Is(err, errSilent) {
 		os.Exit(1)
 	}
+	var ee *exec.ExitError
+	if errors.As(err, &ee) {
+		os.Exit(ee.ExitCode())
+	}
+	if jsonOutput {
+		_ = writeJSON(rootCmd.OutOrStdout(), errorEnvelope{Error: errorBody{Message: err.Error()}})
+	} else {
+		fmt.Fprintln(rootCmd.ErrOrStderr(), "Error:", err)
+	}
+	os.Exit(1)
 }
 
 // resolveRoot returns the absolute repository root path.
