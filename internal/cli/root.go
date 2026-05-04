@@ -29,12 +29,11 @@ var (
 var rootCmd = &cobra.Command{
 	Use:   "dotfiles",
 	Short: "Manage your dotfiles by syncing local config with a checked-in mirror",
-	Long: `dotfiles synchronizes a set of local configuration files with a mirror kept
-inside a git repository. The list of managed paths is declared in a JSON
-manifest. Files are copied (not symlinked) in either direction.
+	Long: `Manage your dotfiles by syncing local config with a checked-in mirror.
 
-Pass --json to any command to receive a single JSON object on stdout. The
-exit code is still non-zero on failure; --verbose is ignored in JSON mode.`,
+Tracks a set of local configuration files declared in a JSON manifest and
+copies (not symlinks) them between the live filesystem and a git-managed
+mirror.`,
 	SilenceUsage:  true,
 	SilenceErrors: true,
 }
@@ -55,7 +54,7 @@ func init() {
 	rootCmd.PersistentFlags().BoolVarP(&dryRun, "dry-run", "n", false, "preview actions without writing")
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "log every file action (ignored when --json is set)")
 	rootCmd.PersistentFlags().BoolVarP(&prune, "prune", "p", false, "remove destination files not in the manifest")
-	rootCmd.PersistentFlags().BoolVar(&jsonOutput, "json", false, "emit a single JSON object on stdout instead of plain text")
+	rootCmd.PersistentFlags().BoolVar(&jsonOutput, "json", false, "emit a single JSON object on stdout (non-zero exit on failure)")
 }
 
 // Execute runs the CLI and exits the process with an appropriate status code.
