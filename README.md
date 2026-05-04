@@ -122,7 +122,7 @@ prints a structured report:
       "tool": "git",
       "local": "/home/user/.gitconfig",
       "dotfile": "/home/user/.dotfiles/config/git/.gitconfig",
-      "state": "in sync"
+      "state": "in-sync"
     }
   ],
   "summary": { "total": 1, "unsynced": 0 }

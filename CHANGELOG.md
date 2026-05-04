@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Changed
+
+- `status` state labels are now hyphenated (e.g. `in-sync`, `dotfile-missing`).
+
 ## [0.1.1] - 2026-05-04
 
 ### Changed

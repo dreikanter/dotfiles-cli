@@ -9,12 +9,12 @@ import (
 type State string
 
 const (
-	StateInSync         State = "in sync"
-	StateLocalMissing   State = "local copy missing"
-	StateDotfileMissing State = "dotfile missing"
-	StateLocalChanges   State = "local changes"
-	StateDotfileChanges State = "dotfile changes"
-	StateNeitherExists  State = "neither exists"
+	StateInSync         State = "in-sync"
+	StateLocalMissing   State = "local-copy-missing"
+	StateDotfileMissing State = "dotfile-missing"
+	StateLocalChanges   State = "local-changes"
+	StateDotfileChanges State = "dotfile-changes"
+	StateNeitherExists  State = "neither-exists"
 )
 
 // StatusEntry is the comparison result for one Entry.
