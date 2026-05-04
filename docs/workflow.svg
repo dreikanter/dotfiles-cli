@@ -116,18 +116,9 @@
 
     <rect class="frame frame-yellow panel-fill" x="600" y="540" width="240" height="160" rx="10" filter="url(#soft-glow)"/>
 
-    <!-- minimalist 'cloud / branch' glyph -->
-    <g transform="translate(720,584)" stroke="#ffe066" fill="none" stroke-width="1.2">
-      <circle cx="-18" cy="0" r="5"/>
-      <circle cx="18"  cy="0" r="5"/>
-      <circle cx="0"   cy="22" r="5"/>
-      <path d="M -14,2 C -6,12 6,12 14,2"/>
-      <path d="M 0,5 L 0,17"/>
-    </g>
-
-    <text class="box-title" x="720" y="640" text-anchor="middle">GitHub</text>
-    <text class="box-sub"   x="720" y="660" text-anchor="middle">(or any git remote)</text>
-    <text class="note"      x="720" y="682" text-anchor="middle">backup &amp; share across machines</text>
+    <text class="box-title" x="720" y="604" text-anchor="middle">GitHub</text>
+    <text class="box-sub"   x="720" y="624" text-anchor="middle">(or any git remote)</text>
+    <text class="note"      x="720" y="646" text-anchor="middle">backup &amp; share across machines</text>
   </g>
 
   <!-- Push / pull arrows between Machine A repo and GitHub -->
