@@ -80,10 +80,10 @@ func (r *Resolver) resolveTool(tool string, paths []string) []Spec {
 	return specs
 }
 
-// ExpandUnion turns a Spec into entries by taking the union of files on the
+// expandUnion turns a Spec into entries by taking the union of files on the
 // live and saved sides. It is used for status reporting where files that
 // exist on only one side still need to surface.
-func ExpandUnion(s Spec) ([]Entry, error) {
+func expandUnion(s Spec) ([]Entry, error) {
 	if !s.IsDir {
 		return []Entry{{Tool: s.Tool, Live: s.LiveRoot, Saved: s.SavedRoot}}, nil
 	}
@@ -97,10 +97,10 @@ func ExpandUnion(s Spec) ([]Entry, error) {
 	return relsToEntries(s, rels), nil
 }
 
-// ExpandSource produces entries from files present on the source side of the
+// expandSource produces entries from files present on the source side of the
 // given direction: the live tree for DirSave, the saved tree for DirInstall.
 // Use this for copy/prune planning where only real source files matter.
-func ExpandSource(s Spec, dir Direction) ([]Entry, error) {
+func expandSource(s Spec, dir Direction) ([]Entry, error) {
 	if !s.IsDir {
 		return []Entry{{Tool: s.Tool, Live: s.LiveRoot, Saved: s.SavedRoot}}, nil
 	}
@@ -132,11 +132,11 @@ func relsToEntries(s Spec, rels map[string]struct{}) []Entry {
 	return out
 }
 
-// ExpandAllUnion concatenates ExpandUnion across specs.
+// ExpandAllUnion concatenates expandUnion across specs.
 func ExpandAllUnion(specs []Spec) ([]Entry, error) {
 	var out []Entry
 	for _, s := range specs {
-		es, err := ExpandUnion(s)
+		es, err := expandUnion(s)
 		if err != nil {
 			return nil, err
 		}
@@ -145,11 +145,11 @@ func ExpandAllUnion(specs []Spec) ([]Entry, error) {
 	return out, nil
 }
 
-// ExpandAllSource concatenates ExpandSource across specs for the direction.
+// ExpandAllSource concatenates expandSource across specs for the direction.
 func ExpandAllSource(specs []Spec, dir Direction) ([]Entry, error) {
 	var out []Entry
 	for _, s := range specs {
-		es, err := ExpandSource(s, dir)
+		es, err := expandSource(s, dir)
 		if err != nil {
 			return nil, err
 		}

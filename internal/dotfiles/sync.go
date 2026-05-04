@@ -238,7 +238,7 @@ func destinationSet(specs []Spec, dir Direction) (map[string]struct{}, []string)
 			destRoot = s.LiveRoot
 		}
 		dirs = append(dirs, destRoot)
-		entries, err := ExpandSource(s, dir)
+		entries, err := expandSource(s, dir)
 		if err != nil {
 			continue
 		}

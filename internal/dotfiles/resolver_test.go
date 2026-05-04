@@ -71,7 +71,7 @@ func TestResolver_MultiTool_DeterministicOrder(t *testing.T) {
 }
 
 func TestExpand_File(t *testing.T) {
-	es, err := ExpandUnion(Spec{Tool: "git", LiveRoot: "/x/.gitconfig", SavedRoot: "/r/config/git/.gitconfig"})
+	es, err := ExpandAllUnion([]Spec{{Tool: "git", LiveRoot: "/x/.gitconfig", SavedRoot: "/r/config/git/.gitconfig"}})
 	require.NoError(t, err)
 	require.Len(t, es, 1)
 	assert.Equal(t, "/x/.gitconfig", es[0].Live)
@@ -91,7 +91,7 @@ func TestExpand_DirUnion(t *testing.T) {
 	require.NoError(t, os.MkdirAll(savedRoot, 0o755))
 	require.NoError(t, os.WriteFile(filepath.Join(savedRoot, "extra.lua"), []byte("z"), 0o644))
 
-	es, err := ExpandUnion(Spec{Tool: "nvim", LiveRoot: liveRoot, SavedRoot: savedRoot, IsDir: true})
+	es, err := ExpandAllUnion([]Spec{{Tool: "nvim", LiveRoot: liveRoot, SavedRoot: savedRoot, IsDir: true}})
 	require.NoError(t, err)
 	require.Len(t, es, 3)
 	rels := []string{}
