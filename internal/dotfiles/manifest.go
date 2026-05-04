@@ -45,10 +45,8 @@ func (m Manifest) Tools() []string {
 	return out
 }
 
-// expand resolves a leading "~" and trims the directory marker suffix.
-// Returns the cleaned absolute path.
+// expand resolves a leading "~" and trims the trailing directory marker.
 func expand(p, home string) string {
-	p = strings.TrimSuffix(p, "/*")
 	p = strings.TrimRight(p, "/")
 	if p == "~" {
 		return home
@@ -60,7 +58,7 @@ func expand(p, home string) string {
 }
 
 // hasDirMarker reports whether the original manifest entry explicitly marks
-// the path as a directory via a trailing slash or "/*".
+// the path as a directory via a trailing slash.
 func hasDirMarker(original string) bool {
-	return strings.HasSuffix(original, "/") || strings.HasSuffix(original, "/*")
+	return strings.HasSuffix(original, "/")
 }

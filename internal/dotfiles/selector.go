@@ -11,9 +11,9 @@ import (
 //
 // Tool is singular (not repeatable). Files require a Tool and are matched by
 // exact, byte-for-byte equality against each Spec's LiveRoot after the same
-// expansion the manifest uses (~ → home, strip /* and trailing /, Clean)
-// plus filepath.Abs to resolve CWD-relative input. No glob support, no
-// symlink resolution, no sub-file matching inside directory entries.
+// expansion the manifest uses (~ → home, strip trailing /, Clean) plus
+// filepath.Abs to resolve CWD-relative input. No glob support, no symlink
+// resolution, no sub-file matching inside directory entries.
 type Selector struct {
 	Tool  string
 	Files []string

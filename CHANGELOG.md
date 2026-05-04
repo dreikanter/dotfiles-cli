@@ -19,6 +19,10 @@
 - Consolidated near-identical filesystem stat helpers. Closes [#22].
 - README defers per-command JSON shapes to `dotfiles <command> --help` instead of repeating one example, removing a second source of truth that could drift. Closes [#18].
 
+### Removed
+
+- Manifest paths no longer accept a trailing `/*` as a directory marker; use a trailing `/` instead.
+
 [#14]: https://github.com/dreikanter/dotfiles-cli/issues/14
 [#15]: https://github.com/dreikanter/dotfiles-cli/issues/15
 [#17]: https://github.com/dreikanter/dotfiles-cli/issues/17

@@ -57,7 +57,6 @@ func TestExpand(t *testing.T) {
 	}{
 		{"~/.gitconfig", "/home/alice/.gitconfig"},
 		{"~/.config/nvim/", "/home/alice/.config/nvim"},
-		{"~/.config/nvim/*", "/home/alice/.config/nvim"},
 		{"~", "/home/alice"},
 		{"/etc/hosts", "/etc/hosts"},
 	}
@@ -68,6 +67,5 @@ func TestExpand(t *testing.T) {
 
 func TestHasDirMarker(t *testing.T) {
 	assert.True(t, hasDirMarker("~/.config/nvim/"))
-	assert.True(t, hasDirMarker("~/.config/nvim/*"))
 	assert.False(t, hasDirMarker("~/.gitconfig"))
 }
