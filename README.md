@@ -73,14 +73,14 @@ the Usage examples below; run `dotfiles <command> --help` for the full list.
 # Apply the manifest to the local environment
 dotfiles apply
 
-# Save and remove destination files no longer in the manifest
-dotfiles save --prune
-
 # Save a single tool's files
 dotfiles save --tool git
 
 # Save specific files within a tool
 dotfiles save --tool git --file ~/.gitconfig --file ~/.gitignore_global
+
+# Save and remove destination files no longer in the manifest
+dotfiles save --prune
 
 # Preview the same scope
 dotfiles status --tool git --file ~/.gitconfig
