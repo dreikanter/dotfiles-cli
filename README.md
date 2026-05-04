@@ -4,7 +4,7 @@ An agent-friendly self-describing CLI to manage your [dotfiles](https://dotfiles
 
 ## Install
 
-Go (1.25+) is a prerequisite.
+Prerequisites: Go (1.25+) and `git`.
 
 ```sh
 go install github.com/dreikanter/dotfiles-cli/cmd/dotfiles@latest
@@ -93,11 +93,14 @@ dotfiles status
 
 # Print the resolved dotfile-to-local mapping
 dotfiles config
-# git    /home/user/.gitconfig                    ->  /home/user/.dotfiles/config/git/.gitconfig
-# git    /home/user/.gitignore_global             ->  /home/user/.dotfiles/config/git/.gitignore_global
-# nvim   /home/user/.config/nvim/init.lua         ->  /home/user/.dotfiles/config/nvim/init.lua
-# nvim   /home/user/.config/nvim/lua/plugins.lua  ->  /home/user/.dotfiles/config/nvim/lua/plugins.lua
-# shell  /home/user/.zshrc                        ->  /home/user/.dotfiles/config/shell/.zshrc
+# Root: /home/user/.dotfiles
+# Config: /home/user/.dotfiles/dotfiles.json
+#
+# git    /home/user/.gitconfig
+# git    /home/user/.gitignore_global
+# nvim   /home/user/.config/nvim/init.lua
+# nvim   /home/user/.config/nvim/lua/plugins.lua
+# shell  /home/user/.zshrc
 # 5 entries
 
 # Scope status and config to a single tool or files
