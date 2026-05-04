@@ -40,10 +40,13 @@ exit code is still non-zero on failure; --verbose is ignored in JSON mode.`,
 }
 
 func init() {
-	if Version == "dev" {
+	if Version == "" || Version == "dev" {
 		if info, ok := debug.ReadBuildInfo(); ok && info.Main.Version != "" && info.Main.Version != "(devel)" {
 			Version = info.Main.Version
 		}
+	}
+	if Version == "" {
+		Version = "unknown"
 	}
 	rootCmd.Version = Version
 

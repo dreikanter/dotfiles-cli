@@ -85,11 +85,11 @@ dotfiles save --json   | jq '.actions[] | select(.action=="error")'
 ## Example
 
 ```sh
-$ dotfiles --root ./testdata/sample-repo apply
+$ dotfiles apply
 dotfiles -> local environment
 Files copied: 5; errors: 0
 
-$ dotfiles --root ./testdata/sample-repo status
+$ dotfiles status
 5 files in sync
 ```
 
