@@ -19,7 +19,13 @@ Run `dotfiles init` to scaffold a new dotfiles repository (default
 `~/.dotfiles`):
 
 ```sh
-dotfiles init
+$ dotfiles init
+Initialized ~/.dotfiles
+
+$ tree ~/.dotfiles
+~/.dotfiles
+├── README.md
+└── dotfiles.json
 ```
 
 It creates the directory, writes an empty `dotfiles.json` manifest and a
