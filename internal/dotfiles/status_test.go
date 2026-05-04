@@ -67,3 +67,17 @@ func TestStatus_AllStates(t *testing.T) {
 	assert.Equal(t, StateSavedChanges, byTool["e"])
 	assert.Equal(t, StateNeitherExists, byTool["f"])
 }
+
+func TestState_Display(t *testing.T) {
+	cases := map[State]string{
+		StateInSync:        "in sync",
+		StateLiveMissing:   "live missing",
+		StateSavedMissing:  "saved missing",
+		StateLiveChanges:   "live changes",
+		StateSavedChanges:  "saved changes",
+		StateNeitherExists: "neither exists",
+	}
+	for s, want := range cases {
+		assert.Equal(t, want, s.Display())
+	}
+}
