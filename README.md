@@ -1,8 +1,6 @@
 # dotfiles CLI
 
-An agent-friendly self-describing CLI to manage your dotfiles. Files are
-copied (no symlinks) between your live environment and a checked-in mirror in
-a git repository.
+An agent-friendly self-describing CLI to manage your [dotfiles](https://dotfiles.github.io/).
 
 ## Install
 
@@ -13,10 +11,15 @@ go install github.com/dreikanter/dotfiles-cli/cmd/dotfiles@latest
 This installs the `dotfiles` binary into `$GOBIN` (default `~/go/bin`); make
 sure that directory is on your `PATH`.
 
-## Manifest
+## Setup
 
-Place a `dotfiles.json` at the root of your dotfiles repository (default
-`~/.dotfiles`):
+Run `dotfiles init` to scaffold a new dotfiles repository (default
+`~/.dotfiles`). It creates the directory, writes an empty `dotfiles.json`
+manifest and a starter `README.md`, then runs `git init`.
+
+The repository is a checked-in mirror of the live config files on your
+machine. The manifest (`dotfiles.json`) maps tool names to lists of paths and
+tells the CLI which files to track:
 
 ```json
 {
@@ -31,28 +34,34 @@ recursively). Files mirror to `<repo>/config/<tool>/<rel>`.
 
 ## Commands
 
-| Command           | Action                                            |
-| ----------------- | ------------------------------------------------- |
-| `dotfiles init`   | Scaffold a fresh dotfiles repository.             |
-| `dotfiles save`   | Copy local files into the dotfiles repository.    |
-| `dotfiles apply`  | Copy repository files into the local environment. |
-| `dotfiles status` | Print files that are out of sync.                 |
-| `dotfiles config` | Print the resolved dotfile-to-local mapping.      |
-
-`apply` has alias `load`; `status` has alias `ls`.
+- `dotfiles init` — scaffold a fresh dotfiles repository
+- `dotfiles save` — copy local files into the dotfiles repository
+- `dotfiles apply` — copy repository files into the local environment (alias: `load`)
+- `dotfiles status` — print files that are out of sync (alias: `ls`)
+- `dotfiles config` — print the resolved dotfile-to-local mapping
 
 ### Flags
 
+These flags are accepted by every command:
+
 - `-n, --dry-run` — preview without writing
 - `-v, --verbose` — log each file action (ignored with `--json`)
-- `-p, --prune` — remove destination files no longer in the manifest
-- `--json` — emit a single JSON object on stdout instead of plain text
+- `--json` — emit a single JSON object on stdout instead of plain text (see [JSON output](#json-output))
 - `--root <path>` — repository root (default `$DOTFILES_ROOT` or `~/.dotfiles`)
 - `--config <path>` — manifest path (default `$DOTFILES_CONFIG` or `<root>/dotfiles.json`)
-- `--tool <name>` — restrict `save`/`apply`/`status`/`config` to a single manifest tool
-- `--file <path>` — restrict to specific files within `--tool` (repeatable; mutually exclusive with `--prune`). Values are expanded the same way manifest entries are (`~`, CWD-relative) and matched literally against the manifest, so the path you pass must equal the manifest entry exactly (no globs, no symlink resolution, no sub-file matching inside directory entries).
+
+Command-specific flags (`--tool`, `--file`, `--prune`, `--force`) are shown in
+the Usage examples below; run `dotfiles <command> --help` for the full list.
+
+## Usage
 
 ```sh
+# Apply the manifest to the local environment
+dotfiles apply
+
+# Save and remove destination files no longer in the manifest
+dotfiles save --prune
+
 # Save a single tool's files
 dotfiles save --tool git
 
@@ -62,6 +71,13 @@ dotfiles save --tool git --file ~/.gitconfig --file ~/.gitignore_global
 # Preview the same scope
 dotfiles status --tool git --file ~/.gitconfig
 dotfiles config --tool git
+
+# Re-scaffold an existing repository, overwriting dotfiles.json and README.md
+dotfiles init --force
+
+# Run against a custom repository (handy for demos and testing)
+$ dotfiles --root ./testdata/sample-repo status
+5 files in sync
 ```
 
 ## JSON output
@@ -80,17 +96,6 @@ extract specific fields:
 ```sh
 dotfiles status --json | jq '.summary.unsynced'
 dotfiles save --json   | jq '.actions[] | select(.action=="error")'
-```
-
-## Example
-
-```sh
-$ dotfiles --root ./testdata/sample-repo apply
-dotfiles -> local environment
-Files copied: 5; errors: 0
-
-$ dotfiles --root ./testdata/sample-repo status
-5 files in sync
 ```
 
 ## Development
