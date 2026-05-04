@@ -14,10 +14,10 @@ import (
 type Direction int
 
 const (
-	// DirSave copies installed files into the dotfiles repository.
+	// DirSave copies live files into the dotfiles repository.
 	DirSave Direction = iota
-	// DirInstall copies repository files into the installed locations on the
-	// live filesystem.
+	// DirInstall copies repository files to their live paths on the live
+	// filesystem.
 	DirInstall
 )
 
@@ -61,7 +61,7 @@ func Sync(specs []Spec, dir Direction, opts Options) (Result, error) {
 	}
 	res := Result{Actions: []Action{}}
 	for _, e := range entries {
-		src, dst := e.Installed, e.Saved
+		src, dst := e.Live, e.Saved
 		if dir == DirInstall {
 			src, dst = dst, src
 		}
@@ -235,7 +235,7 @@ func destinationSet(specs []Spec, dir Direction) (map[string]struct{}, []string)
 		}
 		destRoot := s.SavedRoot
 		if dir == DirInstall {
-			destRoot = s.InstalledRoot
+			destRoot = s.LiveRoot
 		}
 		dirs = append(dirs, destRoot)
 		entries, err := ExpandSource(s, dir)
@@ -246,7 +246,7 @@ func destinationSet(specs []Spec, dir Direction) (map[string]struct{}, []string)
 			if dir == DirSave {
 				expected[e.Saved] = struct{}{}
 			} else {
-				expected[e.Installed] = struct{}{}
+				expected[e.Live] = struct{}{}
 			}
 		}
 	}

@@ -11,12 +11,12 @@ import (
 type State string
 
 const (
-	StateInSync           State = "in-sync"
-	StateInstalledMissing State = "installed-missing"
-	StateSavedMissing     State = "saved-missing"
-	StateInstalledChanges State = "installed-changes"
-	StateSavedChanges     State = "saved-changes"
-	StateNeitherExists    State = "neither-exists"
+	StateInSync        State = "in-sync"
+	StateLiveMissing   State = "live-missing"
+	StateSavedMissing  State = "saved-missing"
+	StateLiveChanges   State = "live-changes"
+	StateSavedChanges  State = "saved-changes"
+	StateNeitherExists State = "neither-exists"
 )
 
 // Display returns the human-readable form of the state, suitable for
@@ -27,13 +27,13 @@ func (s State) Display() string {
 
 // StatusEntry is the comparison result for one Entry.
 type StatusEntry struct {
-	Tool      string `json:"tool"`
-	Installed string `json:"installed"`
-	Saved     string `json:"saved"`
-	State     State  `json:"state"`
+	Tool  string `json:"tool"`
+	Live  string `json:"live"`
+	Saved string `json:"saved"`
+	State State  `json:"state"`
 }
 
-// Status compares each entry's installed and saved files and returns one
+// Status compares each entry's live and saved files and returns one
 // StatusEntry per entry, in the order produced by ExpandAll.
 func Status(specs []Spec) ([]StatusEntry, error) {
 	entries, err := ExpandAllUnion(specs)
@@ -43,23 +43,23 @@ func Status(specs []Spec) ([]StatusEntry, error) {
 	out := make([]StatusEntry, 0, len(entries))
 	for _, e := range entries {
 		out = append(out, StatusEntry{
-			Tool:      e.Tool,
-			Installed: e.Installed,
-			Saved:     e.Saved,
-			State:     compare(e.Installed, e.Saved),
+			Tool:  e.Tool,
+			Live:  e.Live,
+			Saved: e.Saved,
+			State: compare(e.Live, e.Saved),
 		})
 	}
 	return out, nil
 }
 
-func compare(installed, saved string) State {
-	li, lerr := os.Stat(installed)
+func compare(live, saved string) State {
+	li, lerr := os.Stat(live)
 	di, derr := os.Stat(saved)
 	switch {
 	case os.IsNotExist(lerr) && os.IsNotExist(derr):
 		return StateNeitherExists
 	case os.IsNotExist(lerr):
-		return StateInstalledMissing
+		return StateLiveMissing
 	case os.IsNotExist(derr):
 		return StateSavedMissing
 	case lerr != nil || derr != nil:
@@ -68,9 +68,9 @@ func compare(installed, saved string) State {
 	if li.IsDir() || di.IsDir() {
 		return StateInSync // directories are not compared as units
 	}
-	lb, err := os.ReadFile(installed)
+	lb, err := os.ReadFile(live)
 	if err != nil {
-		return StateInstalledMissing
+		return StateLiveMissing
 	}
 	db, err := os.ReadFile(saved)
 	if err != nil {
@@ -80,7 +80,7 @@ func compare(installed, saved string) State {
 		return StateInSync
 	}
 	if li.ModTime().After(di.ModTime()) {
-		return StateInstalledChanges
+		return StateLiveChanges
 	}
 	return StateSavedChanges
 }

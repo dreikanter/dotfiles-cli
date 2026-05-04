@@ -116,7 +116,7 @@ func TestCLI_InstallAndStatus(t *testing.T) {
 
 	out, err := runCLI(t, "--root", repo, "install")
 	require.NoError(t, err, "install failed: %s", out)
-	assert.Contains(t, out, "saved -> installed")
+	assert.Contains(t, out, "saved -> live")
 	assert.Contains(t, out, "Copied:")
 
 	for _, rel := range []string{".gitconfig", ".gitignore_global", ".zshrc", ".config/nvim/init.lua", ".config/nvim/lua/plugins.lua"} {
@@ -177,9 +177,9 @@ func TestCLI_ConfigJSON(t *testing.T) {
 		Root    string `json:"root"`
 		Config  string `json:"config"`
 		Entries []struct {
-			Tool      string `json:"tool"`
-			Installed string `json:"installed"`
-			Saved     string `json:"saved"`
+			Tool  string `json:"tool"`
+			Live  string `json:"live"`
+			Saved string `json:"saved"`
 		} `json:"entries"`
 	}
 	require.NoError(t, json.Unmarshal([]byte(out), &resp))
@@ -189,7 +189,7 @@ func TestCLI_ConfigJSON(t *testing.T) {
 	for _, e := range resp.Entries {
 		assert.NotEmpty(t, e.Tool)
 		assert.True(t, strings.HasPrefix(e.Saved, repo), "saved under repo: %s", e.Saved)
-		assert.True(t, strings.HasPrefix(e.Installed, home), "installed under home: %s", e.Installed)
+		assert.True(t, strings.HasPrefix(e.Live, home), "live under home: %s", e.Live)
 	}
 }
 
@@ -240,7 +240,7 @@ func TestCLI_SaveJSON(t *testing.T) {
 	require.NotEmpty(t, resp.Actions)
 	assert.Equal(t, "copy", resp.Actions[0].Action)
 	// JSON mode must not leak the plain-text header.
-	assert.NotContains(t, out, "installed ->")
+	assert.NotContains(t, out, "live ->")
 }
 
 func TestCLI_InstallJSONDryRun(t *testing.T) {

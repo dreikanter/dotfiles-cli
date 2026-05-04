@@ -43,10 +43,10 @@ recursively). Files mirror to `<repo>/config/<tool>/<rel>`.
 ## Commands
 
 - `dotfiles init` — scaffold a fresh dotfiles repository
-- `dotfiles save` — copy installed files into the dotfiles repository
-- `dotfiles install` — copy repository files into their installed locations
+- `dotfiles save` — copy tracked files into the dotfiles repository
+- `dotfiles install` — copy tracked files to their live paths
 - `dotfiles status` — print files that are out of sync (alias: `ls`)
-- `dotfiles config` — print the resolved installed-to-saved mapping
+- `dotfiles config` — print the resolved live-to-saved mapping
 
 ### Flags
 
@@ -75,7 +75,7 @@ tree ~/.dotfiles
 # Re-scaffold an existing repository, overwriting dotfiles.json and README.md
 dotfiles init --force
 
-# Install the manifest into the live environment
+# Install tracked files to their live paths
 dotfiles install
 
 # Save a single tool's files
@@ -90,7 +90,7 @@ dotfiles save --prune
 # Report which managed files are out of sync
 dotfiles status
 
-# Print the resolved installed-to-saved mapping
+# Print the resolved live-to-saved mapping
 dotfiles config
 # Root: /home/user/.dotfiles
 # Config: /home/user/.dotfiles/dotfiles.json
@@ -122,7 +122,7 @@ prints a structured report:
   "entries": [
     {
       "tool": "git",
-      "installed": "/home/user/.gitconfig",
+      "live": "/home/user/.gitconfig",
       "saved": "/home/user/.dotfiles/config/git/.gitconfig",
       "state": "in-sync"
     }

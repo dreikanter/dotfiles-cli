@@ -8,7 +8,7 @@
 
 ### Changed
 
-- The two sides of every sync are now called `installed` (the live config in your environment) and `saved` (the copy in the dotfiles repository), replacing the previous `local`/`dotfile` terminology. This affects: status state values (`installed-missing`, `saved-missing`, `installed-changes`, `saved-changes`), `status --json` and `config --json` per-entry fields (`installed`, `saved`), and plain-text headers for `save`/`install`. Closes [#14].
+- The two sides of every sync are now called `live` (the file at the path each tool reads) and `saved` (the copy in the dotfiles repository), replacing the previous `local`/`dotfile` terminology. This affects: status state values (`live-missing`, `saved-missing`, `live-changes`, `saved-changes`), `status --json` and `config --json` per-entry fields (`live`, `saved`), and plain-text headers for `save`/`install`. Closes [#14].
 - Renamed the `apply` command to `install`. The `load` alias is dropped.
 - `--prune`/`-p`, `--verbose`/`-v`, and `--dry-run`/`-n` are no longer global flags; they are now declared only on the commands that consume them (`--prune` on `save`/`install`; `--verbose` and `--dry-run` on `save`/`install`/`init`). `status` and `config` no longer accept these flags. As a side effect, `dotfiles -v` now prints the version.
 

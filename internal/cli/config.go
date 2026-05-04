@@ -10,9 +10,9 @@ import (
 )
 
 type configEntry struct {
-	Tool      string `json:"tool"`
-	Installed string `json:"installed"`
-	Saved     string `json:"saved"`
+	Tool  string `json:"tool"`
+	Live  string `json:"live"`
+	Saved string `json:"saved"`
 }
 
 type configResponse struct {
@@ -26,15 +26,15 @@ const configExamples = `  dotfiles config --tool git
 
 var configCmd = &cobra.Command{
 	Use:   "config",
-	Short: "Print the resolved installed-to-saved mapping",
-	Long: `Print the resolved mapping between installed paths and saved repository paths.
+	Short: "Print the resolved live-to-saved mapping",
+	Long: `Print the resolved mapping between live paths and saved repository paths.
 
 JSON output shape:
 
   {
     "root": "<dotfiles repository root>",
     "config": "<manifest file path>",
-    "entries": [{"tool", "installed", "saved"}, ...]
+    "entries": [{"tool", "live", "saved"}, ...]
   }`,
 	Example: configExamples,
 	RunE: func(cmd *cobra.Command, args []string) error {
@@ -56,7 +56,7 @@ JSON output shape:
 		}
 		out := make([]configEntry, 0, len(entries))
 		for _, e := range entries {
-			out = append(out, configEntry{Tool: e.Tool, Installed: e.Installed, Saved: e.Saved})
+			out = append(out, configEntry{Tool: e.Tool, Live: e.Live, Saved: e.Saved})
 		}
 		w := cmd.OutOrStdout()
 		if jsonOutput {
@@ -73,7 +73,7 @@ func writeConfigTable(w io.Writer, root, manifest string, entries []configEntry)
 	fmt.Fprintln(w)
 	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
 	for _, e := range entries {
-		fmt.Fprintf(tw, "%s\t%s\n", e.Tool, e.Installed)
+		fmt.Fprintf(tw, "%s\t%s\n", e.Tool, e.Live)
 	}
 	_ = tw.Flush()
 	fmt.Fprintf(w, "%d entries\n", len(entries))

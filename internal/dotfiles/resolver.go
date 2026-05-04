@@ -10,20 +10,20 @@ import (
 )
 
 // Spec describes one path declared in the manifest after resolution.
-// InstalledRoot is an absolute path on the live filesystem; SavedRoot is the
-// matching path inside the repository.
+// LiveRoot is the absolute path on the live filesystem where each tool reads
+// the file; SavedRoot is the matching path inside the dotfiles repository.
 type Spec struct {
-	Tool          string
-	InstalledRoot string
-	SavedRoot     string
-	IsDir         bool
+	Tool      string
+	LiveRoot  string
+	SavedRoot string
+	IsDir     bool
 }
 
 // Entry is a concrete file pair: a single source/destination to copy or compare.
 type Entry struct {
-	Tool      string
-	Installed string
-	Saved     string
+	Tool  string
+	Live  string
+	Saved string
 }
 
 // Resolver turns a Manifest into Specs grounded against a repository root and
@@ -71,24 +71,24 @@ func (r *Resolver) resolveTool(tool string, paths []string) []Spec {
 			rel = filepath.Base(it.resolved)
 		}
 		specs = append(specs, Spec{
-			Tool:          tool,
-			InstalledRoot: it.resolved,
-			SavedRoot:     filepath.Join(r.RepoRoot, "config", tool, rel),
-			IsDir:         it.isDir,
+			Tool:      tool,
+			LiveRoot:  it.resolved,
+			SavedRoot: filepath.Join(r.RepoRoot, "config", tool, rel),
+			IsDir:     it.isDir,
 		})
 	}
 	return specs
 }
 
 // ExpandUnion turns a Spec into entries by taking the union of files on the
-// installed and saved sides. It is used for status reporting where files that
+// live and saved sides. It is used for status reporting where files that
 // exist on only one side still need to surface.
 func ExpandUnion(s Spec) ([]Entry, error) {
 	if !s.IsDir {
-		return []Entry{{Tool: s.Tool, Installed: s.InstalledRoot, Saved: s.SavedRoot}}, nil
+		return []Entry{{Tool: s.Tool, Live: s.LiveRoot, Saved: s.SavedRoot}}, nil
 	}
 	rels := map[string]struct{}{}
-	if err := walkFiles(s.InstalledRoot, rels); err != nil {
+	if err := walkFiles(s.LiveRoot, rels); err != nil {
 		return nil, err
 	}
 	if err := walkFiles(s.SavedRoot, rels); err != nil {
@@ -98,13 +98,13 @@ func ExpandUnion(s Spec) ([]Entry, error) {
 }
 
 // ExpandSource produces entries from files present on the source side of the
-// given direction: the installed tree for DirSave, the saved tree for DirInstall.
+// given direction: the live tree for DirSave, the saved tree for DirInstall.
 // Use this for copy/prune planning where only real source files matter.
 func ExpandSource(s Spec, dir Direction) ([]Entry, error) {
 	if !s.IsDir {
-		return []Entry{{Tool: s.Tool, Installed: s.InstalledRoot, Saved: s.SavedRoot}}, nil
+		return []Entry{{Tool: s.Tool, Live: s.LiveRoot, Saved: s.SavedRoot}}, nil
 	}
-	root := s.InstalledRoot
+	root := s.LiveRoot
 	if dir == DirInstall {
 		root = s.SavedRoot
 	}
@@ -124,9 +124,9 @@ func relsToEntries(s Spec, rels map[string]struct{}) []Entry {
 	out := make([]Entry, 0, len(keys))
 	for _, rel := range keys {
 		out = append(out, Entry{
-			Tool:      s.Tool,
-			Installed: filepath.Join(s.InstalledRoot, rel),
-			Saved:     filepath.Join(s.SavedRoot, rel),
+			Tool:  s.Tool,
+			Live:  filepath.Join(s.LiveRoot, rel),
+			Saved: filepath.Join(s.SavedRoot, rel),
 		})
 	}
 	return out

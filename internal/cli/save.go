@@ -45,21 +45,21 @@ const syncExamples = `  dotfiles save --tool git
 
 var saveCmd = &cobra.Command{
 	Use:     "save",
-	Short:   "Copy installed files into the dotfiles repository",
-	Long:    "Copy installed files into the dotfiles repository.\n\n" + syncJSONShape,
+	Short:   "Copy tracked files into the dotfiles repository",
+	Long:    "Copy tracked files into the dotfiles repository.\n\n" + syncJSONShape,
 	Example: syncExamples,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return runSync(cmd, dotfiles.DirSave, "save", "installed -> saved")
+		return runSync(cmd, dotfiles.DirSave, "save", "live -> saved")
 	},
 }
 
 var installCmd = &cobra.Command{
 	Use:     "install",
-	Short:   "Copy dotfiles repository files into their installed locations",
-	Long:    "Copy dotfiles repository files into their installed locations.\n\n" + syncJSONShape,
+	Short:   "Copy tracked files to their live paths",
+	Long:    "Copy tracked files to their live paths.\n\n" + syncJSONShape,
 	Example: syncExamples,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return runSync(cmd, dotfiles.DirInstall, "install", "saved -> installed")
+		return runSync(cmd, dotfiles.DirInstall, "install", "saved -> live")
 	},
 }
 

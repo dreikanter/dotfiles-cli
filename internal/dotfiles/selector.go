@@ -10,8 +10,8 @@ import (
 // everything.
 //
 // Tool is singular (not repeatable). Files require a Tool and are matched by
-// exact, byte-for-byte equality against each Spec's InstalledRoot after the
-// same expansion the manifest uses (~ → home, strip /* and trailing /, Clean)
+// exact, byte-for-byte equality against each Spec's LiveRoot after the same
+// expansion the manifest uses (~ → home, strip /* and trailing /, Clean)
 // plus filepath.Abs to resolve CWD-relative input. No glob support, no
 // symlink resolution, no sub-file matching inside directory entries.
 type Selector struct {
@@ -50,9 +50,9 @@ func (s Selector) Apply(specs []Spec, home string) ([]Spec, error) {
 		return toolSpecs, nil
 	}
 
-	byInstalled := make(map[string]Spec, len(toolSpecs))
+	byLive := make(map[string]Spec, len(toolSpecs))
 	for _, sp := range toolSpecs {
-		byInstalled[sp.InstalledRoot] = sp
+		byLive[sp.LiveRoot] = sp
 	}
 
 	out := make([]Spec, 0, len(s.Files))
@@ -62,7 +62,7 @@ func (s Selector) Apply(specs []Spec, home string) ([]Spec, error) {
 		if err != nil {
 			return nil, fmt.Errorf("resolve --file %q: %w", f, err)
 		}
-		sp, ok := byInstalled[abs]
+		sp, ok := byLive[abs]
 		if !ok {
 			return nil, fmt.Errorf("file %q not declared by tool %q", abs, s.Tool)
 		}
