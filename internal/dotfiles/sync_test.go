@@ -33,8 +33,7 @@ func scenario(t *testing.T) (home, repo string, specs []Spec) {
 }
 
 func TestSync_Save(t *testing.T) {
-	home, repo, specs := scenario(t)
-	_ = home
+	_, repo, specs := scenario(t)
 
 	res, err := Sync(specs, DirSave, Options{})
 	require.NoError(t, err)
@@ -150,8 +149,7 @@ func TestSync_DryRunReportsChanges(t *testing.T) {
 }
 
 func TestSync_ReplacesSymlink(t *testing.T) {
-	home, repo, specs := scenario(t)
-	_ = home
+	_, repo, specs := scenario(t)
 	target := filepath.Join(repo, "config/git/.gitconfig")
 	require.NoError(t, os.MkdirAll(filepath.Dir(target), 0o755))
 	require.NoError(t, os.Symlink("/nonexistent", target))
@@ -164,8 +162,7 @@ func TestSync_ReplacesSymlink(t *testing.T) {
 }
 
 func TestSync_Prune(t *testing.T) {
-	home, repo, specs := scenario(t)
-	_ = home
+	_, repo, specs := scenario(t)
 	_, err := Sync(specs, DirSave, Options{})
 	require.NoError(t, err)
 
