@@ -152,31 +152,24 @@ func runInit(cmd *cobra.Command) error {
 
 func writeInitFile(path, content string, dryRun, force bool, logOut io.Writer) (initAction, error) {
 	exists := existsFile(path)
-	switch {
-	case exists && !force:
+	if exists && !force {
 		fmt.Fprintf(logOut, "skip %s\n", path)
 		return initAction{Action: "skip", Path: path, Message: "already exists"}, nil
-	case dryRun:
-		action := "create"
-		if exists {
-			action = "overwrite"
-		}
-		fmt.Fprintf(logOut, "%s %s\n", action, path)
-		return initAction{Action: action, Path: path}, nil
-	default:
+	}
+	action := "create"
+	if exists {
+		action = "overwrite"
+	}
+	if !dryRun {
 		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 			return initAction{}, fmt.Errorf("create %s: %w", filepath.Dir(path), err)
 		}
 		if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
 			return initAction{}, fmt.Errorf("write %s: %w", path, err)
 		}
-		action := "create"
-		if exists {
-			action = "overwrite"
-		}
-		fmt.Fprintf(logOut, "%s %s\n", action, path)
-		return initAction{Action: action, Path: path}, nil
 	}
+	fmt.Fprintf(logOut, "%s %s\n", action, path)
+	return initAction{Action: action, Path: path}, nil
 }
 
 func initGit(gitPath, root, gitDir string, dryRun bool, logOut io.Writer) (initAction, error) {
