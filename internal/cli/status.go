@@ -61,7 +61,7 @@ JSON output shape:
 			if e.State == dotfiles.StateInSync {
 				continue
 			}
-			fmt.Fprintf(out, "%-20s %s\n", e.State, e.Local)
+			fmt.Fprintf(out, "%-20s %s\n", e.State.Display(), e.Local)
 		}
 		if unsynced == 0 {
 			fmt.Fprintf(out, "%d files in sync\n", len(entries))

@@ -3,19 +3,27 @@ package dotfiles
 import (
 	"bytes"
 	"os"
+	"strings"
 )
 
-// State enumerates the possible sync states for a single Entry.
+// State enumerates the possible sync states for a single Entry. The string
+// form is the JSON-friendly hyphenated token; use Display for plain text.
 type State string
 
 const (
-	StateInSync         State = "in sync"
-	StateLocalMissing   State = "local copy missing"
-	StateDotfileMissing State = "dotfile missing"
-	StateLocalChanges   State = "local changes"
-	StateDotfileChanges State = "dotfile changes"
-	StateNeitherExists  State = "neither exists"
+	StateInSync         State = "in-sync"
+	StateLocalMissing   State = "local-copy-missing"
+	StateDotfileMissing State = "dotfile-missing"
+	StateLocalChanges   State = "local-changes"
+	StateDotfileChanges State = "dotfile-changes"
+	StateNeitherExists  State = "neither-exists"
 )
+
+// Display returns the human-readable form of the state, suitable for
+// plain-text output.
+func (s State) Display() string {
+	return strings.ReplaceAll(string(s), "-", " ")
+}
 
 // StatusEntry is the comparison result for one Entry.
 type StatusEntry struct {

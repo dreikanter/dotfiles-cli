@@ -88,8 +88,17 @@ dotfiles save --tool git --file ~/.gitconfig --file ~/.gitignore_global
 # Save and remove destination files no longer in the manifest
 dotfiles save --prune
 
-# Report which managed files are out of sync (not a preview — reads on-disk state)
+# Report which managed files are out of sync
 dotfiles status
+
+# Print the resolved dotfile-to-local mapping
+dotfiles config
+# git    /home/user/.gitconfig                    ->  /home/user/.dotfiles/config/git/.gitconfig
+# git    /home/user/.gitignore_global             ->  /home/user/.dotfiles/config/git/.gitignore_global
+# nvim   /home/user/.config/nvim/init.lua         ->  /home/user/.dotfiles/config/nvim/init.lua
+# nvim   /home/user/.config/nvim/lua/plugins.lua  ->  /home/user/.dotfiles/config/nvim/lua/plugins.lua
+# shell  /home/user/.zshrc                        ->  /home/user/.dotfiles/config/shell/.zshrc
+# 5 entries
 
 # Scope status and config to a single tool or files
 dotfiles status --tool git --file ~/.gitconfig
@@ -111,9 +120,9 @@ prints a structured report:
   "entries": [
     {
       "tool": "git",
-      "local": "/home/alex/.gitconfig",
-      "dotfile": "/home/alex/.dotfiles/config/git/.gitconfig",
-      "state": "in sync"
+      "local": "/home/user/.gitconfig",
+      "dotfile": "/home/user/.dotfiles/config/git/.gitconfig",
+      "state": "in-sync"
     }
   ],
   "summary": { "total": 1, "unsynced": 0 }
