@@ -117,7 +117,7 @@ func TestCLI_ApplyAndStatus(t *testing.T) {
 	out, err := runCLI(t, "--root", repo, "apply")
 	require.NoError(t, err, "apply failed: %s", out)
 	assert.Contains(t, out, "dotfiles -> local environment")
-	assert.Contains(t, out, "Files copied:")
+	assert.Contains(t, out, "Copied:")
 
 	for _, rel := range []string{".gitconfig", ".gitignore_global", ".zshrc", ".config/nvim/init.lua", ".config/nvim/lua/plugins.lua"} {
 		_, err := os.Stat(filepath.Join(home, rel))
@@ -153,10 +153,12 @@ func TestCLI_ConfigPlainText(t *testing.T) {
 
 	out, err := runCLI(t, "--root", repo, "config")
 	require.NoError(t, err)
-	assert.Contains(t, out, "->")
 	assert.Contains(t, out, "entries")
+	assert.Contains(t, out, "git")
 	assert.Contains(t, out, filepath.Join(home, ".gitconfig"))
-	assert.Contains(t, out, filepath.Join(repo, "config/git/.gitconfig"))
+	// Plain-text config no longer echoes the dotfile mirror path.
+	assert.NotContains(t, out, "->")
+	assert.NotContains(t, out, filepath.Join(repo, "config/git/.gitconfig"))
 }
 
 func TestCLI_ConfigJSON(t *testing.T) {
@@ -246,6 +248,107 @@ func TestCLI_ApplyJSONDryRun(t *testing.T) {
 	// --verbose must be ignored in JSON mode (no "OK ..." lines).
 	assert.NotContains(t, out, "\nOK ")
 	assert.NotContains(t, out, "[DRY RUN]")
+}
+
+func TestCLI_SaveReportsOnlyChangedFiles(t *testing.T) {
+	repo, home := stageRepoAndHome(t)
+
+	// Seed the local home from the repo so the second save has nothing to write.
+	_, err := runCLI(t, "--root", repo, "apply")
+	require.NoError(t, err)
+
+	// Modify a single file; save should report only it.
+	require.NoError(t, os.WriteFile(filepath.Join(home, ".gitconfig"), []byte("changed\n"), 0o644))
+
+	out, err := runCLI(t, "--root", repo, "save")
+	require.NoError(t, err)
+	assert.Contains(t, out, "copy ")
+	assert.Contains(t, out, ".gitconfig")
+	// Untouched files must not appear in the default report.
+	assert.NotContains(t, out, ".zshrc")
+	assert.NotContains(t, out, "init.lua")
+	assert.NotContains(t, out, "unchanged ")
+	assert.Contains(t, out, "Copied: 1")
+	assert.Contains(t, out, "unchanged: 4")
+}
+
+func TestCLI_SaveDryRunReportsChanges(t *testing.T) {
+	repo, home := stageRepoAndHome(t)
+	_, err := runCLI(t, "--root", repo, "apply")
+	require.NoError(t, err)
+	require.NoError(t, os.WriteFile(filepath.Join(home, ".gitconfig"), []byte("changed\n"), 0o644))
+
+	out, err := runCLI(t, "--root", repo, "save", "-n")
+	require.NoError(t, err)
+	assert.Contains(t, out, "[DRY RUN]")
+	assert.Contains(t, out, "copy ")
+	assert.Contains(t, out, ".gitconfig")
+	// Other files match — they must not show up in the dry-run report.
+	assert.NotContains(t, out, ".zshrc")
+
+	// Dry run must not write the change.
+	got, err := os.ReadFile(filepath.Join(repo, "config/git/.gitconfig"))
+	require.NoError(t, err)
+	assert.NotEqual(t, "changed\n", string(got))
+}
+
+func TestCLI_SavePruneReportsDeletedFiles(t *testing.T) {
+	repo, _ := stageRepoAndHome(t)
+	_, err := runCLI(t, "--root", repo, "apply")
+	require.NoError(t, err)
+
+	stray := filepath.Join(repo, "config/nvim/leftover.lua")
+	require.NoError(t, os.WriteFile(stray, []byte("stale"), 0o644))
+
+	out, err := runCLI(t, "--root", repo, "save", "--prune")
+	require.NoError(t, err)
+	assert.Contains(t, out, "prune ")
+	assert.Contains(t, out, stray)
+	assert.Contains(t, out, "removed: 1")
+}
+
+func TestCLI_SaveJSONIncludesUnchanged(t *testing.T) {
+	repo, _ := stageRepoAndHome(t)
+	_, err := runCLI(t, "--root", repo, "apply")
+	require.NoError(t, err)
+
+	out, err := runCLI(t, "--root", repo, "save", "--json")
+	require.NoError(t, err)
+	var resp struct {
+		Copied    int `json:"copied"`
+		Unchanged int `json:"unchanged"`
+		Errors    int `json:"errors"`
+		Actions   []struct {
+			Action string `json:"action"`
+		} `json:"actions"`
+	}
+	require.NoError(t, json.Unmarshal([]byte(out), &resp))
+	assert.Equal(t, 0, resp.Copied)
+	assert.NotZero(t, resp.Unchanged)
+	require.NotEmpty(t, resp.Actions)
+	for _, a := range resp.Actions {
+		assert.Equal(t, "unchanged", a.Action)
+	}
+}
+
+func TestCLI_StatusShowsToolName(t *testing.T) {
+	repo, home := stageRepoAndHome(t)
+	_, err := runCLI(t, "--root", repo, "apply")
+	require.NoError(t, err)
+
+	// Make one file out of sync so it surfaces in the report.
+	require.NoError(t, os.WriteFile(filepath.Join(home, ".gitconfig"), []byte("local edit\n"), 0o644))
+
+	out, err := runCLI(t, "--root", repo, "status")
+	require.NoError(t, err)
+	// The report row should include the tool name alongside the path.
+	for _, line := range strings.Split(out, "\n") {
+		if strings.Contains(line, ".gitconfig") {
+			assert.Contains(t, line, "git", "tool name should appear: %q", line)
+			return
+		}
+	}
+	t.Fatalf("no .gitconfig row in status output:\n%s", out)
 }
 
 func TestCLI_SaveAndApplyRoundtrip(t *testing.T) {

@@ -2,6 +2,7 @@ package cli
 
 import (
 	"fmt"
+	"text/tabwriter"
 
 	"github.com/dreikanter/dotfiles-cli/internal/dotfiles"
 	"github.com/spf13/cobra"
@@ -57,12 +58,14 @@ JSON output shape:
 				Summary: statusSummary{Total: len(entries), Unsynced: unsynced},
 			})
 		}
+		tw := tabwriter.NewWriter(out, 0, 0, 2, ' ', 0)
 		for _, e := range entries {
 			if e.State == dotfiles.StateInSync {
 				continue
 			}
-			fmt.Fprintf(out, "%-20s %s\n", e.State.Display(), e.Local)
+			fmt.Fprintf(tw, "%s\t%s\t%s\n", e.State.Display(), e.Tool, e.Local)
 		}
+		_ = tw.Flush()
 		if unsynced == 0 {
 			fmt.Fprintf(out, "%d files in sync\n", len(entries))
 		} else {

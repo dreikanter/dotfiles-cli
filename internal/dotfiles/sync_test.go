@@ -77,10 +77,92 @@ func TestSync_DryRun(t *testing.T) {
 
 func TestSync_Verbose(t *testing.T) {
 	_, _, specs := scenario(t)
-	var buf bytes.Buffer
-	_, err := Sync(specs, DirSave, Options{Verbose: true, Out: &buf})
+
+	// First sync writes everything; output should report "copy" for each file.
+	var first bytes.Buffer
+	res, err := Sync(specs, DirSave, Options{Verbose: true, Out: &first})
 	require.NoError(t, err)
-	assert.Contains(t, buf.String(), "OK ")
+	assert.Equal(t, 4, res.Copied)
+	assert.Equal(t, 0, res.Unchanged)
+	assert.Contains(t, first.String(), "copy ")
+	assert.NotContains(t, first.String(), "unchanged ")
+
+	// Second sync finds identical files; verbose should surface them as "unchanged".
+	var second bytes.Buffer
+	res, err = Sync(specs, DirSave, Options{Verbose: true, Out: &second})
+	require.NoError(t, err)
+	assert.Equal(t, 0, res.Copied)
+	assert.Equal(t, 4, res.Unchanged)
+	assert.Contains(t, second.String(), "unchanged ")
+	assert.NotContains(t, second.String(), "copy ")
+}
+
+func TestSync_DefaultOmitsUnchanged(t *testing.T) {
+	_, _, specs := scenario(t)
+	_, err := Sync(specs, DirSave, Options{})
+	require.NoError(t, err)
+
+	// All files match the mirror; default (non-verbose) output should be empty.
+	var buf bytes.Buffer
+	res, err := Sync(specs, DirSave, Options{Out: &buf})
+	require.NoError(t, err)
+	assert.Equal(t, 0, res.Copied)
+	assert.Equal(t, 4, res.Unchanged)
+	assert.Empty(t, buf.String())
+}
+
+func TestSync_DefaultPrintsChanges(t *testing.T) {
+	home, _, specs := scenario(t)
+	_, err := Sync(specs, DirSave, Options{})
+	require.NoError(t, err)
+
+	// Mutate one file so it is the only change; default output lists only that one.
+	require.NoError(t, os.WriteFile(filepath.Join(home, ".gitconfig"), []byte("[user]\n\tname = Bob\n"), 0o644))
+
+	var buf bytes.Buffer
+	res, err := Sync(specs, DirSave, Options{Out: &buf})
+	require.NoError(t, err)
+	assert.Equal(t, 1, res.Copied)
+	assert.Equal(t, 3, res.Unchanged)
+	assert.Contains(t, buf.String(), "copy ")
+	assert.Contains(t, buf.String(), ".gitconfig")
+	assert.NotContains(t, buf.String(), ".zshrc")
+}
+
+func TestSync_DryRunReportsChanges(t *testing.T) {
+	home, repo, specs := scenario(t)
+	_, err := Sync(specs, DirSave, Options{})
+	require.NoError(t, err)
+	require.NoError(t, os.WriteFile(filepath.Join(home, ".gitconfig"), []byte("[user]\n\tname = Bob\n"), 0o644))
+
+	var buf bytes.Buffer
+	res, err := Sync(specs, DirSave, Options{DryRun: true, Out: &buf})
+	require.NoError(t, err)
+	assert.Equal(t, 1, res.Copied)
+	assert.Equal(t, 3, res.Unchanged)
+	assert.Contains(t, buf.String(), "copy ")
+
+	// Dry run must not write the change.
+	got, err := os.ReadFile(filepath.Join(repo, "config/git/.gitconfig"))
+	require.NoError(t, err)
+	assert.Equal(t, "[user]\n\tname = Alice\n", string(got))
+}
+
+func TestSync_PruneAlwaysReports(t *testing.T) {
+	home, repo, specs := scenario(t)
+	_ = home
+	_, err := Sync(specs, DirSave, Options{})
+	require.NoError(t, err)
+
+	stray := filepath.Join(repo, "config/nvim/leftover.lua")
+	require.NoError(t, os.WriteFile(stray, []byte("stale"), 0o644))
+
+	var buf bytes.Buffer
+	res, err := Sync(specs, DirSave, Options{Prune: true, Out: &buf})
+	require.NoError(t, err)
+	assert.Equal(t, 1, res.Removed)
+	assert.Contains(t, buf.String(), "prune ")
+	assert.Contains(t, buf.String(), stray)
 }
 
 func TestSync_ReplacesSymlink(t *testing.T) {

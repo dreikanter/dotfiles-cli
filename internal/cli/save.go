@@ -19,6 +19,7 @@ type syncResponse struct {
 	Direction string            `json:"direction"`
 	DryRun    bool              `json:"dryRun"`
 	Copied    int               `json:"copied"`
+	Unchanged int               `json:"unchanged"`
 	Removed   int               `json:"removed"`
 	Errors    int               `json:"errors"`
 	Filter    *syncFilter       `json:"filter,omitempty"`
@@ -31,10 +32,11 @@ const syncJSONShape = `JSON output shape:
     "direction": "save"|"apply",
     "dryRun":    bool,
     "copied":    N,
+    "unchanged": N,
     "removed":   N,
     "errors":    N,
     "filter":    {"tool": "git", "files": [...]} | omitted,
-    "actions":   [{"action": "copy"|"prune"|"error", "from", "to", "path", "message"}, ...]
+    "actions":   [{"action": "copy"|"unchanged"|"prune"|"error", "from", "to", "path", "message"}, ...]
   }`
 
 const syncExamples = `  dotfiles save --tool git
@@ -102,6 +104,7 @@ func runSync(cmd *cobra.Command, dir dotfiles.Direction, name, header string) er
 			Direction: name,
 			DryRun:    dryRun,
 			Copied:    res.Copied,
+			Unchanged: res.Unchanged,
 			Removed:   res.Removed,
 			Errors:    res.Errors,
 			Filter:    buildFilter(sel),
@@ -114,11 +117,11 @@ func runSync(cmd *cobra.Command, dir dotfiles.Direction, name, header string) er
 		}
 		return nil
 	}
-	fmt.Fprintf(out, "Files copied: %d; errors: %d", res.Copied, res.Errors)
+	fmt.Fprintf(out, "Copied: %d; unchanged: %d", res.Copied, res.Unchanged)
 	if prune {
-		fmt.Fprintf(out, "; files removed: %d", res.Removed)
+		fmt.Fprintf(out, "; removed: %d", res.Removed)
 	}
-	fmt.Fprintln(out)
+	fmt.Fprintf(out, "; errors: %d\n", res.Errors)
 	if res.Errors > 0 {
 		return fmt.Errorf("%s failed: %d errors", name, res.Errors)
 	}

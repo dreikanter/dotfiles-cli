@@ -2,8 +2,13 @@
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-05-04
+
 ### Changed
 
+- `save` and `apply` now list each file they actually change or delete, and stay quiet about files that already match. The summary line gains an `unchanged` count (and the `--json` envelope an `unchanged` field plus `"action": "unchanged"` per-file entries). Dry-run mode produces the same report without touching the filesystem. `--verbose` additionally prints unchanged files.
+- `status` plain-text output now includes the tool name alongside each out-of-sync file.
+- `config` plain-text output now lists only the tool and live path; the dotfile mirror path is no longer echoed (use `--json` for the full mapping).
 - `status --json` state labels are now hyphenated (e.g. `in-sync`, `dotfile-missing`); plain-text output is unchanged.
 - Error messages from `save`, `apply`, `init`, `status`, and `config` now name the failed operation and the affected path (e.g. `open /home/foo/.bashrc: permission denied`) instead of returning bare OS errors. Improves both plain-text and `--json` output (the `error.message` and per-file `actions[].message` fields).
 
