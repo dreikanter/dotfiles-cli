@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- `config` output now includes the resolved dotfiles repository root: a top-level `root` field in `--json` mode, and a `Root: <path>` header line above a divider in plain-text mode.
+
 ## [0.1.2] - 2026-05-04
 
 ### Changed

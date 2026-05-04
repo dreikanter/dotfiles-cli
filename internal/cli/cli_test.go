@@ -153,9 +153,15 @@ func TestCLI_ConfigPlainText(t *testing.T) {
 
 	out, err := runCLI(t, "--root", repo, "config")
 	require.NoError(t, err)
+	assert.Contains(t, out, "Root: "+repo)
 	assert.Contains(t, out, "entries")
 	assert.Contains(t, out, "git")
 	assert.Contains(t, out, filepath.Join(home, ".gitconfig"))
+	// Root header must precede the entries list.
+	assert.True(t, strings.Index(out, "Root: ") < strings.Index(out, "git"),
+		"root path must appear above the synced files list")
+	// Root header is distinctively separated from the entries by a divider line.
+	assert.Contains(t, out, strings.Repeat("-", 40))
 	// Plain-text config no longer echoes the dotfile mirror path.
 	assert.NotContains(t, out, "->")
 	assert.NotContains(t, out, filepath.Join(repo, "config/git/.gitconfig"))
@@ -167,6 +173,7 @@ func TestCLI_ConfigJSON(t *testing.T) {
 	out, err := runCLI(t, "--root", repo, "config", "--json")
 	require.NoError(t, err)
 	var resp struct {
+		Root    string `json:"root"`
 		Entries []struct {
 			Tool    string `json:"tool"`
 			Local   string `json:"local"`
@@ -174,6 +181,7 @@ func TestCLI_ConfigJSON(t *testing.T) {
 		} `json:"entries"`
 	}
 	require.NoError(t, json.Unmarshal([]byte(out), &resp))
+	assert.Equal(t, repo, resp.Root)
 	require.NotEmpty(t, resp.Entries)
 	for _, e := range resp.Entries {
 		assert.NotEmpty(t, e.Tool)
