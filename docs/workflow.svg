@@ -1,0 +1,230 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 880"
+     font-family="ui-monospace, 'JetBrains Mono', 'SF Mono', Menlo, Consolas, monospace">
+  <defs>
+    <style><![CDATA[
+      .bg            { fill: #0a0e18; }
+      .frame         { fill: none; stroke-width: 1; }
+      .frame-cyan    { stroke: #22ffe1; }
+      .frame-pink    { stroke: #ff3df0; }
+      .frame-yellow  { stroke: #ffe066; }
+      .frame-dim     { stroke: #1f2a44; }
+      .panel-fill    { fill: #0e1424; }
+
+      .title         { fill: #e2e8f0; font-size: 26px; font-weight: 600; letter-spacing: 0.06em; }
+      .subtitle      { fill: #64748b; font-size: 13px; letter-spacing: 0.04em; }
+      .header        { fill: #94a3b8; font-size: 11px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; }
+      .box-title     { fill: #e2e8f0; font-size: 15px; font-weight: 600; }
+      .box-sub       { fill: #64748b; font-size: 11px; font-style: italic; }
+      .item          { fill: #94a3b8; font-size: 12px; }
+      .item-key      { fill: #cbd5e1; font-size: 12px; }
+      .note          { fill: #64748b; font-size: 11px; }
+      .arrow-label   { fill: #e2e8f0; font-size: 12px; font-weight: 500; }
+      .cmd           { fill: #b6ff5c; font-size: 12px; font-weight: 600; }
+      .cmd-mute      { fill: #94a3b8; font-size: 12px; }
+
+      .line-cyan     { stroke: #22ffe1; stroke-width: 1.4; fill: none; }
+      .line-pink     { stroke: #ff3df0; stroke-width: 1.4; fill: none; }
+      .line-yellow   { stroke: #ffe066; stroke-width: 1.4; fill: none; stroke-dasharray: 5 4; }
+      .line-mirror   { stroke: #475569; stroke-width: 1; fill: none; stroke-dasharray: 2 4; }
+      .divider       { stroke: #1f2a44; stroke-width: 1; }
+    ]]></style>
+
+    <filter id="soft-glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="2.2" result="b"/>
+      <feMerge>
+        <feMergeNode in="b"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <marker id="arr-cyan" viewBox="0 0 10 10" refX="9" refY="5"
+            markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#22ffe1"/>
+    </marker>
+    <marker id="arr-pink" viewBox="0 0 10 10" refX="9" refY="5"
+            markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#ff3df0"/>
+    </marker>
+    <marker id="arr-yellow" viewBox="0 0 10 10" refX="9" refY="5"
+            markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#ffe066"/>
+    </marker>
+  </defs>
+
+  <rect class="bg" width="1440" height="880"/>
+
+  <!-- Title -->
+  <g>
+    <text class="title" x="720" y="58" text-anchor="middle">dotfiles workflow</text>
+    <text class="subtitle" x="720" y="84" text-anchor="middle">
+      live config &#8596; dotfiles repo &#8596; remote
+    </text>
+  </g>
+
+  <!-- ===================== MACHINE A ===================== -->
+  <g>
+    <text class="header" x="280" y="124" text-anchor="middle">Machine A (your laptop)</text>
+
+    <!-- Live config box -->
+    <rect class="frame frame-cyan panel-fill" x="60" y="140" width="440" height="190" rx="10" filter="url(#soft-glow)"/>
+    <text class="box-title" x="84" y="172">Live configuration</text>
+    <text class="box-sub"   x="84" y="190">files in $HOME the OS &amp; tools actually read</text>
+    <line class="divider" x1="84" y1="202" x2="476" y2="202"/>
+    <g>
+      <text class="item-key" x="84" y="224">~/.zshrc</text>
+      <text class="item-key" x="84" y="244">~/.gitconfig</text>
+      <text class="item-key" x="84" y="264">~/.gitignore_global</text>
+      <text class="item-key" x="84" y="284">~/.config/nvim/init.lua</text>
+      <text class="item"     x="84" y="304">&#8230;</text>
+    </g>
+
+    <!-- Dotfiles repo box -->
+    <rect class="frame frame-pink panel-fill" x="60" y="500" width="440" height="210" rx="10" filter="url(#soft-glow)"/>
+    <text class="box-title" x="84" y="532">~/.dotfiles</text>
+    <text class="box-sub"   x="84" y="550">git repo &#8212; checked-in mirror of your config</text>
+    <line class="divider" x1="84" y1="562" x2="476" y2="562"/>
+    <g>
+      <text class="item-key" x="84" y="584">dotfiles.json</text>
+      <text class="note"     x="220" y="584">&#8592; manifest, lists tracked paths</text>
+      <text class="item-key" x="84" y="606">config/shell/.zshrc</text>
+      <text class="item-key" x="84" y="626">config/git/.gitconfig</text>
+      <text class="item-key" x="84" y="646">config/git/.gitignore_global</text>
+      <text class="item-key" x="84" y="666">config/nvim/init.lua</text>
+      <text class="item"     x="84" y="686">&#8230;</text>
+    </g>
+
+    <!-- Save arrow (down, pink) -->
+    <line class="line-pink" x1="180" y1="335" x2="180" y2="495" marker-end="url(#arr-pink)"/>
+    <rect x="106" y="395" width="148" height="24" rx="4" fill="#1a0c1f" stroke="#ff3df0" stroke-width="0.8"/>
+    <text class="cmd" x="180" y="411" text-anchor="middle">dotfiles save</text>
+    <text class="note" x="180" y="438" text-anchor="middle">copy live &#8594; repo</text>
+
+    <!-- Install arrow (up, cyan) -->
+    <line class="line-cyan" x1="380" y1="495" x2="380" y2="335" marker-end="url(#arr-cyan)"/>
+    <rect x="298" y="395" width="164" height="24" rx="4" fill="#0a1f1d" stroke="#22ffe1" stroke-width="0.8"/>
+    <text class="cmd" x="380" y="411" text-anchor="middle">dotfiles install</text>
+    <text class="note" x="380" y="438" text-anchor="middle">copy repo &#8594; live</text>
+
+    <!-- Status aside -->
+    <text class="note" x="280" y="464" text-anchor="middle">dotfiles status</text>
+    <text class="note" x="280" y="480" text-anchor="middle">shows what's out of sync</text>
+
+  </g>
+
+  <!-- ===================== GITHUB (middle) ===================== -->
+  <g>
+    <text class="header" x="720" y="528" text-anchor="middle">remote (optional)</text>
+
+    <rect class="frame frame-yellow panel-fill" x="600" y="540" width="240" height="160" rx="10" filter="url(#soft-glow)"/>
+
+    <text class="box-title" x="720" y="604" text-anchor="middle">GitHub</text>
+    <text class="box-sub"   x="720" y="624" text-anchor="middle">(or any git remote)</text>
+    <text class="note"      x="720" y="646" text-anchor="middle">backup &amp; share across machines</text>
+  </g>
+
+  <!-- Push / pull arrows between Machine A repo and GitHub -->
+  <g>
+    <!-- A -> GH (push) -->
+    <line class="line-yellow" x1="500" y1="585" x2="595" y2="585" marker-end="url(#arr-yellow)"/>
+    <text class="cmd" x="547" y="578" text-anchor="middle">git push</text>
+
+    <!-- GH -> A (pull / clone) -->
+    <line class="line-yellow" x1="600" y1="655" x2="505" y2="655" marker-end="url(#arr-yellow)"/>
+    <text class="cmd-mute" x="552" y="675" text-anchor="middle">git pull</text>
+  </g>
+
+  <!-- ===================== MACHINE B ===================== -->
+  <g>
+    <text class="header" x="1160" y="124" text-anchor="middle">Machine B (another machine)</text>
+
+    <!-- Live config box -->
+    <rect class="frame frame-cyan panel-fill" x="940" y="140" width="440" height="190" rx="10" filter="url(#soft-glow)"/>
+    <text class="box-title" x="964" y="172">Live configuration</text>
+    <text class="box-sub"   x="964" y="190">empty &#8212; until you run install</text>
+    <line class="divider" x1="964" y1="202" x2="1356" y2="202"/>
+    <g>
+      <text class="item-key" x="964" y="224">~/.zshrc</text>
+      <text class="item-key" x="964" y="244">~/.gitconfig</text>
+      <text class="item-key" x="964" y="264">~/.gitignore_global</text>
+      <text class="item-key" x="964" y="284">~/.config/nvim/init.lua</text>
+      <text class="item"     x="964" y="304">&#8230;</text>
+    </g>
+
+    <!-- Dotfiles repo box -->
+    <rect class="frame frame-pink panel-fill" x="940" y="500" width="440" height="210" rx="10" filter="url(#soft-glow)"/>
+    <text class="box-title" x="964" y="532">~/.dotfiles</text>
+    <text class="box-sub"   x="964" y="550">cloned from the remote on first setup</text>
+    <line class="divider" x1="964" y1="562" x2="1356" y2="562"/>
+    <g>
+      <text class="item-key" x="964" y="584">dotfiles.json</text>
+      <text class="item-key" x="964" y="606">config/shell/.zshrc</text>
+      <text class="item-key" x="964" y="626">config/git/.gitconfig</text>
+      <text class="item-key" x="964" y="646">config/git/.gitignore_global</text>
+      <text class="item-key" x="964" y="666">config/nvim/init.lua</text>
+      <text class="item"     x="964" y="686">&#8230;</text>
+    </g>
+
+    <!-- Install arrow (up, cyan) - emphasized on B since that's the typical first step -->
+    <line class="line-cyan" x1="1060" y1="495" x2="1060" y2="335" marker-end="url(#arr-cyan)"/>
+    <rect x="978" y="395" width="164" height="24" rx="4" fill="#0a1f1d" stroke="#22ffe1" stroke-width="0.8"/>
+    <text class="cmd" x="1060" y="411" text-anchor="middle">dotfiles install</text>
+    <text class="note" x="1060" y="438" text-anchor="middle">apply snapshots locally</text>
+
+    <!-- Save arrow (down, pink) -->
+    <line class="line-pink" x1="1260" y1="335" x2="1260" y2="495" marker-end="url(#arr-pink)"/>
+    <rect x="1186" y="395" width="148" height="24" rx="4" fill="#1a0c1f" stroke="#ff3df0" stroke-width="0.8"/>
+    <text class="cmd" x="1260" y="411" text-anchor="middle">dotfiles save</text>
+    <text class="note" x="1260" y="438" text-anchor="middle">capture local edits</text>
+
+    <text class="note" x="1160" y="468" text-anchor="middle">then git push to share back</text>
+  </g>
+
+  <!-- Push / pull arrows between GitHub and Machine B -->
+  <g>
+    <!-- GH -> B (clone / pull) -->
+    <line class="line-yellow" x1="845" y1="585" x2="940" y2="585" marker-end="url(#arr-yellow)"/>
+    <text class="cmd" x="892" y="578" text-anchor="middle">git pull</text>
+
+    <!-- B -> GH (push) -->
+    <line class="line-yellow" x1="940" y1="655" x2="845" y2="655" marker-end="url(#arr-yellow)"/>
+    <text class="cmd-mute" x="892" y="675" text-anchor="middle">git push</text>
+  </g>
+
+  <!-- ===================== LEGEND / COMMAND CHEAT SHEET ===================== -->
+  <g transform="translate(0,760)">
+    <line class="divider" x1="60" y1="0" x2="620" y2="0"/>
+    <line class="divider" x1="820" y1="0" x2="1380" y2="0"/>
+    <text class="header" x="720" y="4" text-anchor="middle">command reference</text>
+
+    <g transform="translate(60,52)">
+      <text class="cmd" x="0" y="14">dotfiles init</text>
+      <text class="note" x="0" y="34">scaffold a fresh repo</text>
+      <text class="note" x="0" y="50">(once per new machine)</text>
+    </g>
+    <g transform="translate(280,52)">
+      <text class="cmd" x="0" y="14">dotfiles save</text>
+      <text class="note" x="0" y="34">copy live files into</text>
+      <text class="note" x="0" y="50">~/.dotfiles snapshots</text>
+    </g>
+    <g transform="translate(500,52)">
+      <text class="cmd" x="0" y="14">dotfiles install</text>
+      <text class="note" x="0" y="34">copy snapshots back</text>
+      <text class="note" x="0" y="50">to their live paths</text>
+    </g>
+    <g transform="translate(720,52)">
+      <text class="cmd" x="0" y="14">dotfiles status</text>
+      <text class="note" x="0" y="34">show which tracked</text>
+      <text class="note" x="0" y="50">files are out of sync</text>
+    </g>
+    <g transform="translate(940,52)">
+      <text class="cmd" x="0" y="14">dotfiles config</text>
+      <text class="note" x="0" y="34">print the resolved</text>
+      <text class="note" x="0" y="50">live &#8594; saved mapping</text>
+    </g>
+    <g transform="translate(1160,52)">
+      <text class="cmd-mute" x="0" y="14">git push / pull</text>
+      <text class="note" x="0" y="34">sync ~/.dotfiles via</text>
+      <text class="note" x="0" y="50">your remote of choice</text>
+    </g>
+  </g>
+</svg>
