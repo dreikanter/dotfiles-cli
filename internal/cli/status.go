@@ -64,7 +64,7 @@ JSON output shape:
 			fmt.Fprintf(out, "%-20s %s\n", e.State, e.Local)
 		}
 		if unsynced == 0 {
-			fmt.Fprintf(out, "%d files in sync\n", len(entries))
+			fmt.Fprintf(out, "%d files synced\n", len(entries))
 		} else {
 			fmt.Fprintf(out, "%d unsynced, %d total\n", unsynced, len(entries))
 		}

@@ -126,7 +126,7 @@ func TestCLI_ApplyAndStatus(t *testing.T) {
 
 	out, err = runCLI(t, "--root", repo, "status")
 	require.NoError(t, err)
-	assert.Contains(t, out, "files in sync")
+	assert.Contains(t, out, "files synced")
 }
 
 func TestCLI_StatusJSON(t *testing.T) {
@@ -414,7 +414,7 @@ func TestCLI_StatusWithFilter(t *testing.T) {
 
 	out, err := runCLI(t, "--root", repo, "status", "--tool", "git")
 	require.NoError(t, err)
-	assert.Contains(t, out, "files in sync")
+	assert.Contains(t, out, "files synced")
 }
 
 func TestCLI_StatusJSONWithFilter(t *testing.T) {
