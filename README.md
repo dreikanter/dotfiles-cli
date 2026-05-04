@@ -13,6 +13,8 @@ sure that directory is on your `PATH`.
 
 ## Setup
 
+Go (1.25+) is a prerequisite for installing the CLI.
+
 Run `dotfiles init` to scaffold a new dotfiles repository (default
 `~/.dotfiles`). It creates the directory, writes an empty `dotfiles.json`
 manifest and a starter `README.md`, then runs `git init`.
