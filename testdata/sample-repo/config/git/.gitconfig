@@ -1,0 +1,7 @@
+[user]
+    name = Sample User
+    email = sample@example.com
+[core]
+    editor = nvim
+[init]
+    defaultBranch = main
