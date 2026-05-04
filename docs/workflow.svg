@@ -106,7 +106,8 @@
     <text class="note" x="380" y="438" text-anchor="middle">copy repo &#8594; live</text>
 
     <!-- Status aside -->
-    <text class="note" x="280" y="468" text-anchor="middle">dotfiles status shows what's out of sync</text>
+    <text class="note" x="280" y="464" text-anchor="middle">dotfiles status</text>
+    <text class="note" x="280" y="480" text-anchor="middle">shows what's out of sync</text>
 
   </g>
 
