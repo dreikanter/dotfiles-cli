@@ -35,7 +35,7 @@ type Resolver struct {
 
 // Resolve produces one Spec per manifest entry. Specs are returned in tool
 // order, then in declaration order within a tool.
-func (r *Resolver) Resolve(m Manifest) []Spec {
+func (r Resolver) Resolve(m Manifest) []Spec {
 	var out []Spec
 	for _, tool := range m.Tools() {
 		out = append(out, r.resolveTool(tool, m[tool])...)
@@ -43,7 +43,7 @@ func (r *Resolver) Resolve(m Manifest) []Spec {
 	return out
 }
 
-func (r *Resolver) resolveTool(tool string, paths []string) []Spec {
+func (r Resolver) resolveTool(tool string, paths []string) []Spec {
 	type item struct {
 		original string
 		resolved string
