@@ -17,6 +17,9 @@ type statusSummary struct {
 	Unsynced int `json:"unsynced"`
 }
 
+const statusExamples = `  dotfiles status --tool git
+  dotfiles status --tool git --file ~/.gitconfig`
+
 var statusCmd = &cobra.Command{
 	Use:     "status",
 	Aliases: []string{"ls"},
@@ -31,8 +34,9 @@ JSON output shape:
     "entries": [{"tool", "local", "dotfile", "state"}, ...],
     "summary": {"total": N, "unsynced": N}
   }`,
+	Example: statusExamples,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		specs, err := loadSpecs()
+		specs, err := loadSpecs(currentSelector())
 		if err != nil {
 			return handleErr(cmd, err)
 		}
@@ -70,4 +74,5 @@ JSON output shape:
 
 func init() {
 	rootCmd.AddCommand(statusCmd)
+	addFilterFlags(statusCmd)
 }

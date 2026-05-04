@@ -48,6 +48,20 @@ recursively). Files mirror to `<repo>/config/<tool>/<rel>`.
 - `--json` — emit a single JSON object on stdout instead of plain text
 - `--root <path>` — repository root (default `$DOTFILES_ROOT` or `~/.dotfiles`)
 - `--config <path>` — manifest path (default `$DOTFILES_CONFIG` or `<root>/dotfiles.json`)
+- `--tool <name>` — restrict `save`/`apply`/`status`/`config` to a single manifest tool
+- `--file <path>` — restrict to specific files within `--tool` (repeatable; mutually exclusive with `--prune`). Values are expanded the same way manifest entries are (`~`, CWD-relative) and matched literally against the manifest, so the path you pass must equal the manifest entry exactly (no globs, no symlink resolution, no sub-file matching inside directory entries).
+
+```sh
+# Save a single tool's files
+dotfiles save --tool git
+
+# Save specific files within a tool
+dotfiles save --tool git --file ~/.gitconfig --file ~/.gitignore_global
+
+# Preview the same scope
+dotfiles status --tool git --file ~/.gitconfig
+dotfiles config --tool git
+```
 
 ## JSON output
 

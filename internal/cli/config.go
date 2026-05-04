@@ -19,6 +19,9 @@ type configResponse struct {
 	Entries []configEntry `json:"entries"`
 }
 
+const configExamples = `  dotfiles config --tool git
+  dotfiles config --tool git --file ~/.gitconfig`
+
 var configCmd = &cobra.Command{
 	Use:   "config",
 	Short: "Print the resolved dotfile-to-local mapping",
@@ -29,8 +32,9 @@ JSON output shape:
   {
     "entries": [{"tool", "local", "dotfile"}, ...]
   }`,
+	Example: configExamples,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		specs, err := loadSpecs()
+		specs, err := loadSpecs(currentSelector())
 		if err != nil {
 			return handleErr(cmd, err)
 		}
@@ -62,4 +66,5 @@ func writeConfigTable(w io.Writer, entries []configEntry) {
 
 func init() {
 	rootCmd.AddCommand(configCmd)
+	addFilterFlags(configCmd)
 }

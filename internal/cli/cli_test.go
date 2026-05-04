@@ -11,6 +11,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -35,6 +37,19 @@ func resetFlags() {
 	verbose = false
 	prune = false
 	jsonOutput = false
+	filterTool = ""
+	filterFiles = nil
+	resetCobraFlagState(rootCmd)
+}
+
+// resetCobraFlagState clears the Changed bit on every flag of cmd and its
+// subcommands. Cobra evaluates flag groups (mutually-exclusive, etc.) against
+// Changed, so without this prior runs would bleed into later ones.
+func resetCobraFlagState(cmd *cobra.Command) {
+	cmd.Flags().VisitAll(func(f *pflag.Flag) { f.Changed = false })
+	for _, sub := range cmd.Commands() {
+		resetCobraFlagState(sub)
+	}
 }
 
 // findTestdataRepo locates testdata/sample-repo relative to the package.
@@ -278,4 +293,178 @@ func TestCLI_MissingManifestJSON(t *testing.T) {
 	}
 	require.NoError(t, json.Unmarshal([]byte(out), &env), "JSON envelope: %s", out)
 	assert.NotEmpty(t, env.Error.Message)
+}
+
+func TestCLI_SaveWithToolFilter(t *testing.T) {
+	repo, home := stageRepoAndHome(t)
+	_, err := runCLI(t, "--root", repo, "apply")
+	require.NoError(t, err)
+
+	require.NoError(t, os.WriteFile(filepath.Join(home, ".gitconfig"), []byte("git changed\n"), 0o644))
+	require.NoError(t, os.WriteFile(filepath.Join(home, ".zshrc"), []byte("shell changed\n"), 0o644))
+
+	out, err := runCLI(t, "--root", repo, "save", "--tool", "git")
+	require.NoError(t, err)
+	assert.Contains(t, out, "[tool=git]")
+
+	got, err := os.ReadFile(filepath.Join(repo, "config/git/.gitconfig"))
+	require.NoError(t, err)
+	assert.Equal(t, "git changed\n", string(got))
+
+	// shell tool was excluded; repo copy must still match the original.
+	got, err = os.ReadFile(filepath.Join(repo, "config/shell/.zshrc"))
+	require.NoError(t, err)
+	assert.NotContains(t, string(got), "shell changed")
+}
+
+func TestCLI_SaveWithToolAndFileFilter(t *testing.T) {
+	repo, home := stageRepoAndHome(t)
+	_, err := runCLI(t, "--root", repo, "apply")
+	require.NoError(t, err)
+
+	require.NoError(t, os.WriteFile(filepath.Join(home, ".gitconfig"), []byte("only this\n"), 0o644))
+	require.NoError(t, os.WriteFile(filepath.Join(home, ".gitignore_global"), []byte("not synced\n"), 0o644))
+
+	out, err := runCLI(t, "--root", repo, "save", "--tool", "git", "--file", filepath.Join(home, ".gitconfig"))
+	require.NoError(t, err)
+	assert.Contains(t, out, "[tool=git, files=1]")
+
+	got, err := os.ReadFile(filepath.Join(repo, "config/git/.gitconfig"))
+	require.NoError(t, err)
+	assert.Equal(t, "only this\n", string(got))
+
+	got, err = os.ReadFile(filepath.Join(repo, "config/git/.gitignore_global"))
+	require.NoError(t, err)
+	assert.NotContains(t, string(got), "not synced")
+}
+
+func TestCLI_SaveJSONWithFilter(t *testing.T) {
+	repo, home := stageRepoAndHome(t)
+	_, err := runCLI(t, "--root", repo, "apply")
+	require.NoError(t, err)
+	require.NoError(t, os.WriteFile(filepath.Join(home, ".gitconfig"), []byte("changed\n"), 0o644))
+
+	out, err := runCLI(t, "--root", repo, "save", "--json", "--tool", "git", "--file", "~/.gitconfig")
+	require.NoError(t, err)
+	var resp struct {
+		Direction string `json:"direction"`
+		Filter    *struct {
+			Tool  string   `json:"tool"`
+			Files []string `json:"files"`
+		} `json:"filter"`
+	}
+	require.NoError(t, json.Unmarshal([]byte(out), &resp))
+	require.NotNil(t, resp.Filter)
+	assert.Equal(t, "git", resp.Filter.Tool)
+	assert.Equal(t, []string{filepath.Join(home, ".gitconfig")}, resp.Filter.Files)
+}
+
+func TestCLI_SaveJSONNoFilter_OmitsFilterField(t *testing.T) {
+	repo, _ := stageRepoAndHome(t)
+	_, err := runCLI(t, "--root", repo, "apply")
+	require.NoError(t, err)
+	out, err := runCLI(t, "--root", repo, "save", "--json")
+	require.NoError(t, err)
+	assert.NotContains(t, out, `"filter"`)
+}
+
+func TestCLI_FileWithoutTool(t *testing.T) {
+	repo, home := stageRepoAndHome(t)
+	_, err := runCLI(t, "--root", repo, "save", "--file", filepath.Join(home, ".gitconfig"))
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "--file requires --tool")
+}
+
+func TestCLI_UnknownTool(t *testing.T) {
+	repo, _ := stageRepoAndHome(t)
+	_, err := runCLI(t, "--root", repo, "save", "--tool", "missing")
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), `tool "missing" not in manifest`)
+}
+
+func TestCLI_FileNotDeclared(t *testing.T) {
+	repo, home := stageRepoAndHome(t)
+	_, err := runCLI(t, "--root", repo, "save", "--tool", "git", "--file", filepath.Join(home, ".zshrc"))
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "not declared by tool")
+}
+
+func TestCLI_FileAndPruneMutuallyExclusive(t *testing.T) {
+	repo, home := stageRepoAndHome(t)
+	_, err := runCLI(t, "--root", repo, "save", "--tool", "git", "--file", filepath.Join(home, ".gitconfig"), "--prune")
+	require.Error(t, err)
+	// Cobra phrases this as "if any flags in the group [file prune] are set
+	// none of the others can be" — match the stable substring.
+	assert.Contains(t, err.Error(), "[file prune]")
+}
+
+func TestCLI_PruneWithToolAllowed(t *testing.T) {
+	repo, _ := stageRepoAndHome(t)
+	_, err := runCLI(t, "--root", repo, "apply")
+	require.NoError(t, err)
+	_, err = runCLI(t, "--root", repo, "save", "--tool", "git", "--prune")
+	require.NoError(t, err)
+}
+
+func TestCLI_StatusWithFilter(t *testing.T) {
+	repo, _ := stageRepoAndHome(t)
+	_, err := runCLI(t, "--root", repo, "apply")
+	require.NoError(t, err)
+
+	out, err := runCLI(t, "--root", repo, "status", "--tool", "git")
+	require.NoError(t, err)
+	assert.Contains(t, out, "files in sync")
+}
+
+func TestCLI_StatusJSONWithFilter(t *testing.T) {
+	repo, _ := stageRepoAndHome(t)
+	out, err := runCLI(t, "--root", repo, "status", "--json", "--tool", "git")
+	require.NoError(t, err)
+	var resp struct {
+		Entries []struct {
+			Tool string `json:"tool"`
+		} `json:"entries"`
+	}
+	require.NoError(t, json.Unmarshal([]byte(out), &resp))
+	require.NotEmpty(t, resp.Entries)
+	for _, e := range resp.Entries {
+		assert.Equal(t, "git", e.Tool)
+	}
+}
+
+func TestCLI_ConfigWithFilter(t *testing.T) {
+	repo, _ := stageRepoAndHome(t)
+	out, err := runCLI(t, "--root", repo, "config", "--tool", "git")
+	require.NoError(t, err)
+	assert.Contains(t, out, ".gitconfig")
+	assert.NotContains(t, out, ".zshrc")
+}
+
+func TestCLI_ConfigJSONWithFilter(t *testing.T) {
+	repo, _ := stageRepoAndHome(t)
+	out, err := runCLI(t, "--root", repo, "config", "--json", "--tool", "git")
+	require.NoError(t, err)
+	var resp struct {
+		Entries []struct {
+			Tool string `json:"tool"`
+		} `json:"entries"`
+	}
+	require.NoError(t, json.Unmarshal([]byte(out), &resp))
+	require.NotEmpty(t, resp.Entries)
+	for _, e := range resp.Entries {
+		assert.Equal(t, "git", e.Tool)
+	}
+}
+
+func TestCLI_FilterErrorJSON(t *testing.T) {
+	repo, _ := stageRepoAndHome(t)
+	out, err := runCLI(t, "--root", repo, "save", "--json", "--tool", "missing")
+	require.ErrorIs(t, err, errSilent)
+	var env struct {
+		Error struct {
+			Message string `json:"message"`
+		} `json:"error"`
+	}
+	require.NoError(t, json.Unmarshal([]byte(out), &env))
+	assert.Contains(t, env.Error.Message, `tool "missing" not in manifest`)
 }

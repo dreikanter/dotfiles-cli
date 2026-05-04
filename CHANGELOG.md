@@ -15,3 +15,4 @@
 - `status --json` now emits `{"entries": [...], "summary": {...}}` instead of a bare array.
 - `config --json` now emits `{"entries": [{"tool", "local", "dotfile"}, ...]}` instead of a flat dotfile→local map (the `tool` field is now preserved).
 - `save --json` / `apply --json` emit `{"direction", "dryRun", "copied", "removed", "errors", "actions": [...]}` with per-file actions.
+- `save`, `apply`, `status`, and `config` now accept `--tool <name>` to scope the operation to a single manifest tool, and `--tool <name> --file <path>` (repeatable) to scope it to specific files within that tool. `--file` is mutually exclusive with `--prune`. The plain-text header for `save`/`apply` echoes the active filter (`[tool=git, files=2]`) and `save`/`apply` JSON output gains a `filter` field with the resolved tool and absolute file paths.
