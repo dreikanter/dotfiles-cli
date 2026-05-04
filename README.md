@@ -106,7 +106,7 @@ dotfiles config --tool git
 
 # Run against a custom repository (handy for demos and testing)
 dotfiles --root ./testdata/sample-repo status
-# 5 files synced
+# 5 files in sync
 ```
 
 ## JSON output
@@ -122,7 +122,7 @@ prints a structured report:
       "tool": "git",
       "local": "/home/user/.gitconfig",
       "dotfile": "/home/user/.dotfiles/config/git/.gitconfig",
-      "state": "synced"
+      "state": "in sync"
     }
   ],
   "summary": { "total": 1, "unsynced": 0 }

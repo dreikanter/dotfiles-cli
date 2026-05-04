@@ -2,10 +2,6 @@
 
 ## [Unreleased]
 
-### Changed
-
-- Renamed the in-sync status label from `in sync` to `synced`.
-
 ## [0.1.1] - 2026-05-04
 
 ### Changed

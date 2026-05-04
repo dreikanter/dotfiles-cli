@@ -9,7 +9,7 @@ import (
 type State string
 
 const (
-	StateInSync         State = "synced"
+	StateInSync         State = "in sync"
 	StateLocalMissing   State = "local copy missing"
 	StateDotfileMissing State = "dotfile missing"
 	StateLocalChanges   State = "local changes"
