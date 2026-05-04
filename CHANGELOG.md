@@ -6,6 +6,10 @@
 
 - `config` output now includes the resolved dotfiles repository root and manifest path: top-level `root` and `config` fields in `--json` mode, and `Root: <path>` and `Config: <path>` header lines above a blank line separating them from the entries in plain-text mode.
 
+### Changed
+
+- `--prune`/`-p`, `--verbose`/`-v`, and `--dry-run`/`-n` are no longer global flags; they are now declared only on the commands that consume them (`--prune` on `save`/`apply`; `--verbose` and `--dry-run` on `save`/`apply`/`init`). `status` and `config` no longer accept these flags. As a side effect, `dotfiles -v` now prints the version.
+
 ## [0.1.2] - 2026-05-04
 
 ### Changed

@@ -69,6 +69,9 @@ func init() {
 	rootCmd.AddCommand(applyCmd)
 	for _, c := range []*cobra.Command{saveCmd, applyCmd} {
 		addFilterFlags(c)
+		c.Flags().BoolVarP(&dryRun, "dry-run", "n", false, "preview actions without writing")
+		c.Flags().BoolVarP(&verbose, "verbose", "v", false, "log every file action (ignored when --json is set)")
+		c.Flags().BoolVarP(&prune, "prune", "p", false, "remove destination files not in the manifest")
 		c.MarkFlagsMutuallyExclusive("file", "prune")
 	}
 }
