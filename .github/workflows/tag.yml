@@ -35,8 +35,8 @@ jobs:
           PREV_VERSION=$(version_from_ref "$PREV_REF" || true)
 
           if [ -z "$VERSION" ]; then
-            echo "No version heading found in CHANGELOG.md" >&2
-            exit 1
+            echo "No version heading found in CHANGELOG.md; skipping"
+            exit 0
           fi
 
           if [ "$VERSION" = "$PREV_VERSION" ]; then
