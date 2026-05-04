@@ -1,6 +1,7 @@
 package dotfiles
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
@@ -28,7 +29,7 @@ type Options struct {
 }
 
 // Action records a single per-file effect of a Sync run for machine-readable
-// output. Action is one of "copy", "prune", or "error".
+// output. Action is one of "copy", "unchanged", "prune", or "error".
 type Action struct {
 	Action  string `json:"action"`
 	From    string `json:"from,omitempty"`
@@ -39,10 +40,11 @@ type Action struct {
 
 // Result summarizes a Sync run.
 type Result struct {
-	Copied  int
-	Removed int
-	Errors  int
-	Actions []Action
+	Copied    int
+	Unchanged int
+	Removed   int
+	Errors    int
+	Actions   []Action
 }
 
 // Sync copies files for the given specs in the chosen direction. When Prune is
@@ -62,16 +64,23 @@ func Sync(specs []Spec, dir Direction, opts Options) (Result, error) {
 		if dir == DirApply {
 			src, dst = dst, src
 		}
-		if err := copyOne(src, dst, opts); err != nil {
+		changed, err := copyOne(src, dst, opts)
+		if err != nil {
 			res.Errors++
 			res.Actions = append(res.Actions, Action{Action: "error", From: src, To: dst, Message: err.Error()})
-			fmt.Fprintf(opts.Out, "Error %s -> %s: %v\n", src, dst, err)
+			fmt.Fprintf(opts.Out, "error %s -> %s: %v\n", src, dst, err)
 			continue
 		}
-		res.Copied++
-		res.Actions = append(res.Actions, Action{Action: "copy", From: src, To: dst})
+		if changed {
+			res.Copied++
+			res.Actions = append(res.Actions, Action{Action: "copy", From: src, To: dst})
+			fmt.Fprintf(opts.Out, "copy %s -> %s\n", src, dst)
+			continue
+		}
+		res.Unchanged++
+		res.Actions = append(res.Actions, Action{Action: "unchanged", From: src, To: dst})
 		if opts.Verbose {
-			fmt.Fprintf(opts.Out, "OK %s -> %s\n", src, dst)
+			fmt.Fprintf(opts.Out, "unchanged %s\n", dst)
 		}
 	}
 	if opts.Prune {
@@ -85,49 +94,88 @@ func Sync(specs []Spec, dir Direction, opts Options) (Result, error) {
 	return res, nil
 }
 
-func copyOne(src, dst string, opts Options) error {
+// copyOne returns whether the destination required a write. Identical contents
+// (after a content compare) are reported as unchanged and skipped, even in
+// dry-run mode, so the caller can distinguish "would change" from "would
+// no-op".
+func copyOne(src, dst string, opts Options) (bool, error) {
 	info, err := os.Stat(src)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return fmt.Errorf("source missing: %s", src)
+			return false, fmt.Errorf("source missing: %s", src)
 		}
-		return fmt.Errorf("stat %s: %w", src, err)
+		return false, fmt.Errorf("stat %s: %w", src, err)
 	}
 	if info.IsDir() {
-		return fmt.Errorf("source is a directory: %s", src)
+		return false, fmt.Errorf("source is a directory: %s", src)
+	}
+	same, err := sameContents(src, dst, info)
+	if err != nil {
+		return false, err
+	}
+	if same {
+		return false, nil
 	}
 	if opts.DryRun {
-		return nil
+		return true, nil
 	}
 	if err := os.MkdirAll(filepath.Dir(dst), 0o755); err != nil {
-		return fmt.Errorf("mkdir %s: %w", filepath.Dir(dst), err)
+		return false, fmt.Errorf("mkdir %s: %w", filepath.Dir(dst), err)
 	}
 	// Replace any existing symlink with a real file copy.
 	if li, err := os.Lstat(dst); err == nil && li.Mode()&fs.ModeSymlink != 0 {
 		if rmErr := os.Remove(dst); rmErr != nil {
-			return fmt.Errorf("remove existing symlink %s: %w", dst, rmErr)
+			return false, fmt.Errorf("remove existing symlink %s: %w", dst, rmErr)
 		}
 	}
 	in, err := os.Open(src)
 	if err != nil {
-		return fmt.Errorf("open %s: %w", src, err)
+		return false, fmt.Errorf("open %s: %w", src, err)
 	}
 	defer in.Close()
 	out, err := os.OpenFile(dst, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, info.Mode().Perm())
 	if err != nil {
-		return fmt.Errorf("create %s: %w", dst, err)
+		return false, fmt.Errorf("create %s: %w", dst, err)
 	}
 	if _, err := io.Copy(out, in); err != nil {
 		out.Close()
-		return fmt.Errorf("copy %s -> %s: %w", src, dst, err)
+		return false, fmt.Errorf("copy %s -> %s: %w", src, dst, err)
 	}
 	if err := out.Close(); err != nil {
-		return fmt.Errorf("close %s: %w", dst, err)
+		return false, fmt.Errorf("close %s: %w", dst, err)
 	}
 	if err := os.Chtimes(dst, info.ModTime(), info.ModTime()); err != nil {
-		return fmt.Errorf("set timestamps on %s: %w", dst, err)
+		return false, fmt.Errorf("set timestamps on %s: %w", dst, err)
 	}
-	return nil
+	return true, nil
+}
+
+// sameContents returns true when dst already exists as a regular file with the
+// same byte contents as src. A missing destination, a symlink, a directory, or
+// any size/byte mismatch counts as "not same".
+func sameContents(src, dst string, srcInfo os.FileInfo) (bool, error) {
+	li, err := os.Lstat(dst)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return false, nil
+		}
+		return false, fmt.Errorf("stat %s: %w", dst, err)
+	}
+	if li.Mode()&fs.ModeSymlink != 0 || li.IsDir() {
+		return false, nil
+	}
+	if li.Size() != srcInfo.Size() {
+		return false, nil
+	}
+	a, err := os.ReadFile(src)
+	if err != nil {
+		return false, fmt.Errorf("read %s: %w", src, err)
+	}
+	b, err := os.ReadFile(dst)
+	if err != nil {
+		return false, fmt.Errorf("read %s: %w", dst, err)
+	}
+	return bytes.Equal(a, b), nil
 }
 
 // prune removes files under destination roots that are not declared by the
@@ -153,9 +201,7 @@ func prune(specs []Spec, dir Direction, opts Options) (int, []Action, error) {
 			if _, ok := expected[p]; ok {
 				return nil
 			}
-			if opts.Verbose {
-				fmt.Fprintf(opts.Out, "PRUNE %s\n", p)
-			}
+			fmt.Fprintf(opts.Out, "prune %s\n", p)
 			if opts.DryRun {
 				removed++
 				actions = append(actions, Action{Action: "prune", Path: p})

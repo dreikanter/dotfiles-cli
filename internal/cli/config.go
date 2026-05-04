@@ -58,7 +58,7 @@ JSON output shape:
 func writeConfigTable(w io.Writer, entries []configEntry) {
 	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
 	for _, e := range entries {
-		fmt.Fprintf(tw, "%s\t%s\t->\t%s\n", e.Tool, e.Local, e.Dotfile)
+		fmt.Fprintf(tw, "%s\t%s\n", e.Tool, e.Local)
 	}
 	_ = tw.Flush()
 	fmt.Fprintf(w, "%d entries\n", len(entries))
