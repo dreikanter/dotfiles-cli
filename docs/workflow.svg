@@ -63,7 +63,7 @@
 
   <!-- ===================== MACHINE A ===================== -->
   <g>
-    <text class="header" x="80" y="124">Machine A &#183; your laptop</text>
+    <text class="header" x="280" y="124" text-anchor="middle">Machine A (your laptop)</text>
 
     <!-- Live config box -->
     <rect class="frame frame-cyan panel-fill" x="60" y="140" width="440" height="190" rx="10" filter="url(#soft-glow)"/>
@@ -135,7 +135,7 @@
 
   <!-- ===================== MACHINE B ===================== -->
   <g>
-    <text class="header" x="940" y="124">Machine B &#183; another machine</text>
+    <text class="header" x="1160" y="124" text-anchor="middle">Machine B (another machine)</text>
 
     <!-- Live config box -->
     <rect class="frame frame-cyan panel-fill" x="940" y="140" width="440" height="190" rx="10" filter="url(#soft-glow)"/>
