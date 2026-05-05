@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- `dotfiles --version` no longer prints a redundant `version v...`; the output is now `dotfiles vX.Y.Z`.
+
 ## [0.1.4] - 2026-05-04
 
 ### Removed

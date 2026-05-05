@@ -48,6 +48,7 @@ func init() {
 		Version = "unknown"
 	}
 	rootCmd.Version = Version
+	rootCmd.SetVersionTemplate("{{.Name}} {{.Version}}\n")
 
 	rootCmd.PersistentFlags().StringVar(&rootPath, "root", "", "dotfiles repository root (default: $DOTFILES_ROOT or ~/.dotfiles)")
 	rootCmd.PersistentFlags().StringVar(&manifestPath, "config", "", "manifest file path (default: <root>/dotfiles.json or $DOTFILES_CONFIG)")
