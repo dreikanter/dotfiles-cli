@@ -40,6 +40,9 @@ func resetFlags() {
 	filterTool = ""
 	filterFiles = nil
 	forceInit = false
+	skillInstall = false
+	skillAgent = ""
+	skillForce = false
 	resetCobraFlagState(rootCmd)
 }
 

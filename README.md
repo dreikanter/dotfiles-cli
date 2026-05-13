@@ -49,6 +49,7 @@ recursively). Files mirror to `<repo>/config/<tool>/<rel>`.
 - `dotfiles install` — copy tracked files to their live paths
 - `dotfiles status` — show the tracked files status
 - `dotfiles config` — print the resolved live-to-saved mapping
+- `dotfiles skill` — print or install an agent skill describing this CLI
 
 ### Flags
 
@@ -111,6 +112,15 @@ dotfiles config --tool git
 # Run against a custom repository (handy for demos and testing)
 dotfiles --root ./testdata/sample-repo status
 # 5 files in sync
+
+# Print the agent skill (markdown + YAML frontmatter) to stdout
+dotfiles skill
+
+# Install the skill into Claude Code's skills directory
+dotfiles skill --install --agent=claude
+
+# Auto-detect installed AI assistants and install into each
+dotfiles skill --install
 ```
 
 ## JSON output

@@ -72,3 +72,9 @@ Version bump guidance:
 
 Use `.github/pull_request_template.md` for all PR bodies. When running `gh pr create`, pass its content via `--body`.
 Drop the `References` section from the PR description when it would only contain the empty placeholder.
+
+<!-- SPECKIT START -->
+For additional context about technologies to be used, project structure,
+shell commands, and other important information, read the current plan
+at `specs/001-generate-skill/plan.md`.
+<!-- SPECKIT END -->
