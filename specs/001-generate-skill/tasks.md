@@ -1,5 +1,4 @@
 ---
-
 description: "Task list for Generate Agent Skill (issue #46)"
 ---
 
