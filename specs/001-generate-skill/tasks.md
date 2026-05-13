@@ -137,7 +137,7 @@ feature is complete.
 **Purpose**: User-facing documentation, final lint pass, end-to-end
 manual smoke-test against `quickstart.md`.
 
-- [ ] T018 [P] Add a single `[Unreleased]` bullet to `CHANGELOG.md` written for the tool's user per Constitution Principle V — high-level conceptual change, no implementation details, no file paths; reference the issue: `[#46]`. PR number is appended in a follow-up commit per CLAUDE.md changelog rules.
+- [X] T018 [P] Add a single `[Unreleased]` bullet to `CHANGELOG.md` written for the tool's user per Constitution Principle V — high-level conceptual change, no implementation details, no file paths; reference the issue: `[#46]`. PR number is appended in a follow-up commit per CLAUDE.md changelog rules.
 - [ ] T019 [P] Add a short `dotfiles skill` paragraph to `README.md` (`Commands` list and a Usage example), and include one `--json` example, consistent with the existing entries for `init`/`save`/`install`/`status`/`config`
 - [ ] T020 Run `make lint` from the repository root and resolve any issues raised against the new code in `internal/cli/skill.go` and `internal/cli/skill_test.go` (Constitution Principle IV gate)
 - [ ] T021 Run `make test` from the repository root and confirm full green across the new tests in `internal/cli/skill_test.go` and the existing suite in `internal/cli/cli_test.go` and `internal/cli/init_test.go` (Constitution Principle IV gate)
