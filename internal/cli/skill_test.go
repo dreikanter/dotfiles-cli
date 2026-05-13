@@ -236,8 +236,10 @@ func TestSkill_InstallUnknownAgent(t *testing.T) {
 	assert.Contains(t, env.Error.Message, "claude")
 }
 
-func TestSkill_InstallRequiresAgent(t *testing.T) {
-	installSandbox(t)
+func TestSkill_InstallAutoDetectNoAgents(t *testing.T) {
+	// Fresh HOME without any agent skills directory present.
+	home := t.TempDir()
+	t.Setenv("HOME", home)
 
 	out, err := runCLI(t, "skill", "--install", "--json")
 	require.Error(t, err)
@@ -248,7 +250,55 @@ func TestSkill_InstallRequiresAgent(t *testing.T) {
 		} `json:"error"`
 	}
 	require.NoError(t, json.Unmarshal([]byte(out), &env))
-	assert.Contains(t, env.Error.Message, "--agent is required")
+	assert.Contains(t, env.Error.Message, "no supported agents detected")
+	assert.Contains(t, env.Error.Message, "--agent")
+	assert.Contains(t, env.Error.Message, "claude")
+}
+
+func TestSkill_InstallAutoDetectSingleAgent(t *testing.T) {
+	_, skillPath := installSandbox(t)
+
+	out, err := runCLI(t, "skill", "--install", "--json")
+	require.NoError(t, err)
+
+	var resp installJSONResp
+	require.NoError(t, json.Unmarshal([]byte(out), &resp))
+	require.Len(t, resp.Actions, 1)
+	assert.Equal(t, "claude", resp.Actions[0].Agent)
+	assert.Equal(t, "create", resp.Actions[0].Action)
+	require.FileExists(t, skillPath)
+}
+
+func TestSkill_InstallAutoDetectMultiAgent(t *testing.T) {
+	home, _ := installSandbox(t)
+	fakeSkillsDir := filepath.Join(home, ".fake", "skills")
+	fakePath := filepath.Join(fakeSkillsDir, "dotfiles", "SKILL.md")
+	require.NoError(t, os.MkdirAll(fakeSkillsDir, 0o755))
+
+	orig := agents
+	t.Cleanup(func() { agents = orig })
+	agents = append(append([]agentTarget{}, orig...), agentTarget{
+		Name:    "fake",
+		PathFor: func() (string, error) { return fakePath, nil },
+		Detect: func() (bool, error) {
+			_, err := os.Stat(fakeSkillsDir)
+			if err != nil {
+				return false, nil
+			}
+			return true, nil
+		},
+	})
+
+	out, err := runCLI(t, "skill", "--install", "--json")
+	require.NoError(t, err)
+
+	var resp installJSONResp
+	require.NoError(t, json.Unmarshal([]byte(out), &resp))
+	require.Len(t, resp.Actions, 2)
+	names := []string{resp.Actions[0].Agent, resp.Actions[1].Agent}
+	assert.ElementsMatch(t, []string{"claude", "fake"}, names)
+
+	require.FileExists(t, fakePath)
 }
 
 func TestSkill_ForceRequiresInstall(t *testing.T) {

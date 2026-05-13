@@ -171,15 +171,15 @@ func runSkillStdout(cmd *cobra.Command, skill Skill) error {
 }
 
 func runSkillInstall(cmd *cobra.Command, skill Skill) error {
-	if skillAgent == "" {
-		return handleErr(cmd, fmt.Errorf("--agent is required (supported: %s)", supportedAgentNames()))
-	}
-	target, ok := findAgent(skillAgent)
-	if !ok {
-		return handleErr(cmd, fmt.Errorf("unknown agent %q (supported: %s)", skillAgent, supportedAgentNames()))
+	targets, err := resolveInstallTargets()
+	if err != nil {
+		return handleErr(cmd, err)
 	}
 
-	actions := []installAction{planInstall(skill, target, skillForce)}
+	actions := make([]installAction, 0, len(targets))
+	for _, t := range targets {
+		actions = append(actions, planInstall(skill, t, skillForce))
+	}
 	actions = applyInstall(skill, actions, dryRun)
 
 	out := cmd.OutOrStdout()
@@ -285,6 +285,39 @@ func installHasFailures(actions []installAction) bool {
 		}
 	}
 	return false
+}
+
+// resolveInstallTargets returns the agents to install into.
+//
+// With --agent=<name>, the result is a single-element slice containing the
+// matching registry entry (or an error if no entry matches the name).
+//
+// Without --agent, every supported agent whose Detect() returns true is
+// included; the order follows the registry's declaration order. An empty
+// detected list is reported as an actionable error.
+func resolveInstallTargets() ([]agentTarget, error) {
+	if skillAgent != "" {
+		target, ok := findAgent(skillAgent)
+		if !ok {
+			return nil, fmt.Errorf("unknown agent %q (supported: %s)", skillAgent, supportedAgentNames())
+		}
+		return []agentTarget{target}, nil
+	}
+
+	detected := make([]agentTarget, 0, len(agents))
+	for _, a := range agents {
+		ok, err := a.Detect()
+		if err != nil {
+			return nil, fmt.Errorf("detect %s: %w", a.Name, err)
+		}
+		if ok {
+			detected = append(detected, a)
+		}
+	}
+	if len(detected) == 0 {
+		return nil, fmt.Errorf("no supported agents detected; pass --agent explicitly (supported: %s)", supportedAgentNames())
+	}
+	return detected, nil
 }
 
 func findAgent(name string) (agentTarget, bool) {
