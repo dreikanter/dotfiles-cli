@@ -37,7 +37,7 @@ All implementation lives under `internal/cli/`; tests live next to it as
 
 **Purpose**: Confirm the existing baseline is green before changes.
 
-- [ ] T001 Run `make test` and `make lint` from the repository root and confirm both pass on branch `001-generate-skill` before making any code changes (baseline guard against pre-existing failures masking new ones)
+- [X] T001 Run `make test` and `make lint` from the repository root and confirm both pass on branch `001-generate-skill` before making any code changes (baseline guard against pre-existing failures masking new ones)
 
 ---
 
@@ -47,7 +47,7 @@ All implementation lives under `internal/cli/`; tests live next to it as
 
 **CRITICAL**: No user story work can begin until Phase 2 is complete.
 
-- [ ] T002 Add new file `internal/cli/skill.go` containing the stub `skillCmd` (`Use: "skill"`, placeholder `Short`/`Long`, `RunE` returning `nil`) and an `init()` that calls `rootCmd.AddCommand(skillCmd)` — register only; no behavior yet
+- [X] T002 Add new file `internal/cli/skill.go` containing the stub `skillCmd` (`Use: "skill"`, placeholder `Short`/`Long`, `RunE` returning `nil`) and an `init()` that calls `rootCmd.AddCommand(skillCmd)` — register only; no behavior yet
 
 **Checkpoint**: `dotfiles --help` now lists `skill`. User story phases can begin.
 
