@@ -2,6 +2,8 @@ package cli
 
 import (
 	"encoding/json"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -82,10 +84,196 @@ func TestSkill_GlobalFlagsListed(t *testing.T) {
 }
 
 func TestSkill_HelpEmbedsJSONShape(t *testing.T) {
-	out, err := runCLI(t, "skill", "--help")
+	// Inspect skillCmd.Long directly. Invoking `runCLI(t, "skill", "--help")`
+	// would leak Cobra's help-flag state into later in-process tests.
+	long := skillCmd.Long
+	assert.Contains(t, long, "JSON output shape (stdout mode):")
+	assert.Contains(t, long, "JSON output shape (install mode")
+	assert.Contains(t, long, `"name"`)
+	assert.Contains(t, long, `"description"`)
+	assert.Contains(t, long, `"body"`)
+	assert.Contains(t, long, `"actions"`)
+	assert.Contains(t, long, "claude")
+}
+
+// installSandbox creates a temp HOME with .claude/skills/ pre-created and
+// returns the absolute path the claude agent install would target.
+func installSandbox(t *testing.T) (home, skillPath string) {
+	t.Helper()
+	home = t.TempDir()
+	t.Setenv("HOME", home)
+	require.NoError(t, os.MkdirAll(filepath.Join(home, ".claude", "skills"), 0o755))
+	skillPath = filepath.Join(home, ".claude", "skills", "dotfiles", "SKILL.md")
+	return home, skillPath
+}
+
+type installJSONResp struct {
+	Actions []struct {
+		Agent  string `json:"agent"`
+		Path   string `json:"path"`
+		Action string `json:"action"`
+		Error  string `json:"error,omitempty"`
+	} `json:"actions"`
+}
+
+func TestSkill_InstallCreate(t *testing.T) {
+	_, skillPath := installSandbox(t)
+
+	out, err := runCLI(t, "skill", "--install", "--agent=claude", "--json")
 	require.NoError(t, err)
-	assert.Contains(t, out, "JSON output shape (stdout mode):")
-	assert.Contains(t, out, `"name"`)
-	assert.Contains(t, out, `"description"`)
-	assert.Contains(t, out, `"body"`)
+
+	var resp installJSONResp
+	require.NoError(t, json.Unmarshal([]byte(out), &resp))
+	require.Len(t, resp.Actions, 1)
+	assert.Equal(t, "claude", resp.Actions[0].Agent)
+	assert.Equal(t, "create", resp.Actions[0].Action)
+	assert.Equal(t, skillPath, resp.Actions[0].Path)
+	assert.Empty(t, resp.Actions[0].Error)
+
+	got, err := os.ReadFile(skillPath)
+	require.NoError(t, err)
+
+	stdout, err := runCLI(t, "skill")
+	require.NoError(t, err)
+	assert.Equal(t, stdout, string(got), "installed file must equal `dotfiles skill` stdout")
+}
+
+func TestSkill_InstallSkipWhenIdentical(t *testing.T) {
+	_, skillPath := installSandbox(t)
+
+	// First run creates the file.
+	_, err := runCLI(t, "skill", "--install", "--agent=claude")
+	require.NoError(t, err)
+	beforeStat, err := os.Stat(skillPath)
+	require.NoError(t, err)
+	beforeMtime := beforeStat.ModTime()
+
+	// Second run with identical content: action=skip, exit 0, no write.
+	out, err := runCLI(t, "skill", "--install", "--agent=claude", "--json")
+	require.NoError(t, err)
+
+	var resp installJSONResp
+	require.NoError(t, json.Unmarshal([]byte(out), &resp))
+	require.Len(t, resp.Actions, 1)
+	assert.Equal(t, "skip", resp.Actions[0].Action)
+
+	afterStat, err := os.Stat(skillPath)
+	require.NoError(t, err)
+	assert.Equal(t, beforeMtime, afterStat.ModTime(), "skip must not touch the file")
+}
+
+func TestSkill_InstallConflictWithoutForce(t *testing.T) {
+	_, skillPath := installSandbox(t)
+
+	_, err := runCLI(t, "skill", "--install", "--agent=claude")
+	require.NoError(t, err)
+
+	require.NoError(t, os.WriteFile(skillPath, []byte("MUTATED\n"), 0o644))
+
+	out, err := runCLI(t, "skill", "--install", "--agent=claude", "--json")
+	require.Error(t, err, "conflict must yield non-zero exit")
+
+	var resp installJSONResp
+	require.NoError(t, json.Unmarshal([]byte(out), &resp))
+	require.Len(t, resp.Actions, 1)
+	assert.Equal(t, "conflict", resp.Actions[0].Action)
+
+	// File is unchanged.
+	got, err := os.ReadFile(skillPath)
+	require.NoError(t, err)
+	assert.Equal(t, "MUTATED\n", string(got), "conflict must not write")
+}
+
+func TestSkill_InstallOverwriteWithForce(t *testing.T) {
+	_, skillPath := installSandbox(t)
+
+	require.NoError(t, os.MkdirAll(filepath.Dir(skillPath), 0o755))
+	require.NoError(t, os.WriteFile(skillPath, []byte("STALE\n"), 0o644))
+
+	out, err := runCLI(t, "skill", "--install", "--agent=claude", "--force", "--json")
+	require.NoError(t, err)
+
+	var resp installJSONResp
+	require.NoError(t, json.Unmarshal([]byte(out), &resp))
+	require.Len(t, resp.Actions, 1)
+	assert.Equal(t, "overwrite", resp.Actions[0].Action)
+
+	got, err := os.ReadFile(skillPath)
+	require.NoError(t, err)
+	stdout, err := runCLI(t, "skill")
+	require.NoError(t, err)
+	assert.Equal(t, stdout, string(got))
+}
+
+func TestSkill_InstallDryRunDoesNotWrite(t *testing.T) {
+	_, skillPath := installSandbox(t)
+
+	out, err := runCLI(t, "skill", "--install", "--agent=claude", "--dry-run", "--json")
+	require.NoError(t, err)
+
+	var resp installJSONResp
+	require.NoError(t, json.Unmarshal([]byte(out), &resp))
+	require.Len(t, resp.Actions, 1)
+	assert.Equal(t, "create", resp.Actions[0].Action, "dry-run must report the same action it would execute")
+
+	_, statErr := os.Stat(skillPath)
+	assert.True(t, os.IsNotExist(statErr), "dry-run must not write the file")
+}
+
+func TestSkill_InstallUnknownAgent(t *testing.T) {
+	installSandbox(t)
+
+	out, err := runCLI(t, "skill", "--install", "--agent=nopepants", "--json")
+	require.Error(t, err)
+
+	var env struct {
+		Error struct {
+			Message string `json:"message"`
+		} `json:"error"`
+	}
+	require.NoError(t, json.Unmarshal([]byte(out), &env))
+	assert.Contains(t, env.Error.Message, "unknown agent")
+	assert.Contains(t, env.Error.Message, "claude")
+}
+
+func TestSkill_InstallRequiresAgent(t *testing.T) {
+	installSandbox(t)
+
+	out, err := runCLI(t, "skill", "--install", "--json")
+	require.Error(t, err)
+
+	var env struct {
+		Error struct {
+			Message string `json:"message"`
+		} `json:"error"`
+	}
+	require.NoError(t, json.Unmarshal([]byte(out), &env))
+	assert.Contains(t, env.Error.Message, "--agent is required")
+}
+
+func TestSkill_ForceRequiresInstall(t *testing.T) {
+	out, err := runCLI(t, "skill", "--force", "--json")
+	require.Error(t, err)
+
+	var env struct {
+		Error struct {
+			Message string `json:"message"`
+		} `json:"error"`
+	}
+	require.NoError(t, json.Unmarshal([]byte(out), &env))
+	assert.Contains(t, env.Error.Message, "require --install")
+}
+
+func TestSkill_InstallSkillsDirMissing(t *testing.T) {
+	// Sandbox HOME without creating .claude/skills/.
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+
+	out, err := runCLI(t, "skill", "--install", "--agent=claude", "--json")
+	require.Error(t, err, "missing skills dir must yield non-zero exit")
+
+	var resp installJSONResp
+	require.NoError(t, json.Unmarshal([]byte(out), &resp))
+	require.Len(t, resp.Actions, 1)
+	assert.Contains(t, resp.Actions[0].Error, "skills directory missing")
 }
