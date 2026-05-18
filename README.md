@@ -44,10 +44,7 @@ recursively). Files mirror to `<repo>/config/<tool>/<rel>`.
 
 ### Why copy, not symlink?
 
-It copies files rather than symlinking them. Symlinks break when an app
-saves its config atomically (write-temp-then-rename), which silently
-replaces the link with a regular file — so the dotfiles repo stops
-tracking changes. Copying keeps the repo a plain, reliable mirror.
+It copies files rather than symlinking them. Symlinks break when an app saves its config atomically (write-temp-then-rename), which silently replaces the link with a regular file — so the dotfiles repo stops tracking changes. Copying keeps the repo a plain, reliable mirror.
 
 ## Commands
 
