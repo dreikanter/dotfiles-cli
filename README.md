@@ -42,6 +42,14 @@ tells the CLI which files to track:
 A trailing `/` marks an entry as a directory (its contents are tracked
 recursively). Files mirror to `<repo>/config/<tool>/<rel>`.
 
+### Why copy, not symlink?
+
+Symlinks cause two recurring problems: file watchers (fsnotify) can behave
+inconsistently across them, and some applications rewrite their config in
+place, replacing the symlink with a regular file and silently breaking the
+link. Copying avoids both — the repo stays a plain mirror, and status
+reports real drift.
+
 ## Commands
 
 - `dotfiles init` — scaffold a fresh dotfiles repository
