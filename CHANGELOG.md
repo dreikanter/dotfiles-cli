@@ -6,6 +6,10 @@
 
 - `dotfiles skill` prints an agent-installable skill document describing the CLI — every available subcommand, the global flags, the manifest model, and the JSON error envelope. Pass `--install --agent=claude` to write it directly into Claude Code's skills directory, or `--install` on its own to auto-detect supported agents and install into each. Honors `--dry-run`, `--force`, byte-equal `skip` detection, and the standard `--json` output. Closes [#46].
 
+### Changed
+
+- README now explains why tracked files are copied rather than symlinked.
+
 ### Fixed
 
 - `dotfiles --version` no longer prints a redundant `version v...`; the output is now `dotfiles vX.Y.Z`.

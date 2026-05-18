@@ -42,6 +42,10 @@ tells the CLI which files to track:
 A trailing `/` marks an entry as a directory (its contents are tracked
 recursively). Files mirror to `<repo>/config/<tool>/<rel>`.
 
+### Why copy, not symlink?
+
+It copies files rather than symlinking them. Symlinks break when some apps save their config atomically (write-temp-then-rename), which silently replaces the link with a regular file, so the dotfiles repo stops tracking changes. Copying keeps the repo a plain, predictable mirror.
+
 ## Commands
 
 - `dotfiles init` — scaffold a fresh dotfiles repository
