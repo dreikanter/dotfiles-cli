@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"os"
-	"strings"
 )
 
 // State enumerates the possible sync states for a single Entry. The string
@@ -22,9 +21,26 @@ const (
 )
 
 // Display returns the human-readable form of the state, suitable for
-// plain-text output.
+// plain-text output. The phrases read as descriptions, not actions, so they
+// do not collide with verbs like "saved" in the save command's output.
 func (s State) Display() string {
-	return strings.ReplaceAll(string(s), "-", " ")
+	switch s {
+	case StateInSync:
+		return "in sync"
+	case StateLiveMissing:
+		return "not on disk"
+	case StateSavedMissing:
+		return "not in repo"
+	case StateLiveChanges:
+		return "live newer"
+	case StateSavedChanges:
+		return "saved newer"
+	case StateNeitherExists:
+		return "both missing"
+	case StateError:
+		return "error"
+	}
+	return string(s)
 }
 
 // StatusEntry is the comparison result for one Entry.

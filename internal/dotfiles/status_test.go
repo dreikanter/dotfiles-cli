@@ -71,11 +71,11 @@ func TestStatus_AllStates(t *testing.T) {
 func TestState_Display(t *testing.T) {
 	cases := map[State]string{
 		StateInSync:        "in sync",
-		StateLiveMissing:   "live missing",
-		StateSavedMissing:  "saved missing",
-		StateLiveChanges:   "live changes",
-		StateSavedChanges:  "saved changes",
-		StateNeitherExists: "neither exists",
+		StateLiveMissing:   "not on disk",
+		StateSavedMissing:  "not in repo",
+		StateLiveChanges:   "live newer",
+		StateSavedChanges:  "saved newer",
+		StateNeitherExists: "both missing",
 		StateError:         "error",
 	}
 	for s, want := range cases {
