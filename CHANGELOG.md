@@ -13,6 +13,7 @@
 ### Fixed
 
 - `dotfiles --version` no longer prints a redundant `version v...`; the output is now `dotfiles vX.Y.Z`.
+- `dotfiles status` plain-text rows now read as state descriptions (`live newer`, `not in repo`, `not on disk`, `saved newer`, `both missing`) instead of phrases like `saved missing` that parsed as verbs and resembled `save` command output. JSON state tokens are unchanged.
 
 ## [0.1.4] - 2026-05-04
 
