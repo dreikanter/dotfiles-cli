@@ -10,7 +10,7 @@ import (
 // everything.
 //
 // Tool is singular (not repeatable). Files require a Tool and are matched by
-// exact, byte-for-byte equality against each Spec's LiveRoot after the same
+// exact, byte-for-byte equality against each Spec's LivePath after the same
 // expansion the manifest uses (~ → home, strip trailing /, Clean) plus
 // filepath.Abs to resolve CWD-relative input. No glob support, no symlink
 // resolution, no sub-file matching inside directory entries.
@@ -52,7 +52,7 @@ func (s Selector) Apply(specs []Spec, home string) ([]Spec, error) {
 
 	byLive := make(map[string]Spec, len(toolSpecs))
 	for _, sp := range toolSpecs {
-		byLive[sp.LiveRoot] = sp
+		byLive[sp.LivePath] = sp
 	}
 
 	out := make([]Spec, 0, len(s.Files))

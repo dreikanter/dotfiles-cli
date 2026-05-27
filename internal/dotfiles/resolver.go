@@ -10,12 +10,12 @@ import (
 )
 
 // Spec describes one path declared in the manifest after resolution.
-// LiveRoot is the absolute path on the live filesystem where each tool reads
-// the file; SavedRoot is the matching path inside the dotfiles repository.
+// LivePath is the absolute path on the live filesystem where each tool reads
+// the file; SavedPath is the matching path inside the dotfiles repository.
 type Spec struct {
 	Tool      string
-	LiveRoot  string
-	SavedRoot string
+	LivePath  string
+	SavedPath string
 	IsDir     bool
 }
 
@@ -83,8 +83,8 @@ func (r Resolver) resolveTool(tool string, paths []string) []Spec {
 		}
 		specs = append(specs, Spec{
 			Tool:      tool,
-			LiveRoot:  it.resolved,
-			SavedRoot: savedRoot,
+			LivePath:  it.resolved,
+			SavedPath: savedRoot,
 			IsDir:     isDir,
 		})
 	}
@@ -96,13 +96,13 @@ func (r Resolver) resolveTool(tool string, paths []string) []Spec {
 // exist on only one side still need to surface.
 func expandUnion(s Spec) ([]Entry, error) {
 	if !s.IsDir {
-		return []Entry{{Tool: s.Tool, Live: s.LiveRoot, Saved: s.SavedRoot}}, nil
+		return []Entry{{Tool: s.Tool, Live: s.LivePath, Saved: s.SavedPath}}, nil
 	}
 	rels := map[string]struct{}{}
-	if err := walkFiles(s.LiveRoot, rels); err != nil {
+	if err := walkFiles(s.LivePath, rels); err != nil {
 		return nil, err
 	}
-	if err := walkFiles(s.SavedRoot, rels); err != nil {
+	if err := walkFiles(s.SavedPath, rels); err != nil {
 		return nil, err
 	}
 	return relsToEntries(s, rels), nil
@@ -113,11 +113,11 @@ func expandUnion(s Spec) ([]Entry, error) {
 // Use this for copy/prune planning where only real source files matter.
 func expandSource(s Spec, dir Direction) ([]Entry, error) {
 	if !s.IsDir {
-		return []Entry{{Tool: s.Tool, Live: s.LiveRoot, Saved: s.SavedRoot}}, nil
+		return []Entry{{Tool: s.Tool, Live: s.LivePath, Saved: s.SavedPath}}, nil
 	}
-	root := s.LiveRoot
+	root := s.LivePath
 	if dir == DirInstall {
-		root = s.SavedRoot
+		root = s.SavedPath
 	}
 	rels := map[string]struct{}{}
 	if err := walkFiles(root, rels); err != nil {
@@ -136,8 +136,8 @@ func relsToEntries(s Spec, rels map[string]struct{}) []Entry {
 	for _, rel := range keys {
 		out = append(out, Entry{
 			Tool:  s.Tool,
-			Live:  filepath.Join(s.LiveRoot, rel),
-			Saved: filepath.Join(s.SavedRoot, rel),
+			Live:  filepath.Join(s.LivePath, rel),
+			Saved: filepath.Join(s.SavedPath, rel),
 		})
 	}
 	return out

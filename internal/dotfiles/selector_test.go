@@ -11,10 +11,10 @@ import (
 
 func sampleSpecs(home string) []Spec {
 	return []Spec{
-		{Tool: "git", LiveRoot: filepath.Join(home, ".gitconfig"), SavedRoot: "/repo/config/git/.gitconfig"},
-		{Tool: "git", LiveRoot: filepath.Join(home, ".gitignore_global"), SavedRoot: "/repo/config/git/.gitignore_global"},
-		{Tool: "shell", LiveRoot: filepath.Join(home, ".zshrc"), SavedRoot: "/repo/config/shell/.zshrc"},
-		{Tool: "nvim", LiveRoot: filepath.Join(home, ".config/nvim"), SavedRoot: "/repo/config/nvim", IsDir: true},
+		{Tool: "git", LivePath: filepath.Join(home, ".gitconfig"), SavedPath: "/repo/config/git/.gitconfig"},
+		{Tool: "git", LivePath: filepath.Join(home, ".gitignore_global"), SavedPath: "/repo/config/git/.gitignore_global"},
+		{Tool: "shell", LivePath: filepath.Join(home, ".zshrc"), SavedPath: "/repo/config/shell/.zshrc"},
+		{Tool: "nvim", LivePath: filepath.Join(home, ".config/nvim"), SavedPath: "/repo/config/nvim", IsDir: true},
 	}
 }
 
@@ -65,7 +65,7 @@ func TestSelector_Apply_ToolAndFile(t *testing.T) {
 	got, err := Selector{Tool: "git", Files: []string{"~/.gitconfig"}}.Apply(specs, home)
 	require.NoError(t, err)
 	require.Len(t, got, 1)
-	assert.Equal(t, filepath.Join(home, ".gitconfig"), got[0].LiveRoot)
+	assert.Equal(t, filepath.Join(home, ".gitconfig"), got[0].LivePath)
 }
 
 func TestSelector_Apply_FileTrailingSlashIgnored(t *testing.T) {
@@ -74,7 +74,7 @@ func TestSelector_Apply_FileTrailingSlashIgnored(t *testing.T) {
 	got, err := Selector{Tool: "nvim", Files: []string{"~/.config/nvim/"}}.Apply(specs, home)
 	require.NoError(t, err)
 	require.Len(t, got, 1)
-	assert.Equal(t, filepath.Join(home, ".config/nvim"), got[0].LiveRoot)
+	assert.Equal(t, filepath.Join(home, ".config/nvim"), got[0].LivePath)
 }
 
 func TestSelector_Apply_FileNotDeclared(t *testing.T) {
@@ -114,11 +114,11 @@ func TestSelector_Apply_FileCWDRelative(t *testing.T) {
 	dir, err := os.Getwd()
 	require.NoError(t, err)
 
-	specs := []Spec{{Tool: "x", LiveRoot: filepath.Join(dir, "f"), SavedRoot: "/repo/config/x/f"}}
+	specs := []Spec{{Tool: "x", LivePath: filepath.Join(dir, "f"), SavedPath: "/repo/config/x/f"}}
 	got, err := Selector{Tool: "x", Files: []string{"f"}}.Apply(specs, "/nope")
 	require.NoError(t, err)
 	require.Len(t, got, 1)
-	assert.Equal(t, filepath.Join(dir, "f"), got[0].LiveRoot)
+	assert.Equal(t, filepath.Join(dir, "f"), got[0].LivePath)
 }
 
 func TestSelector_ResolvedFiles(t *testing.T) {
