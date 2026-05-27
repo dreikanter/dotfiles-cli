@@ -29,26 +29,23 @@ type untrackResponse struct {
 
 var trackCmd = &cobra.Command{
 	Use:   "track <path>",
-	Short: "Add a path to the manifest",
-	Long: `Add a live filesystem path to the manifest under the given tool.
+	Short: "Start tracking a config file or directory",
+	Long: `Start tracking a config file or directory under the given tool name.
 
-The path must exist on disk. If it is a directory the trailing slash is
-added automatically. Paths under HOME are stored as ~/... entries.
-
-Use --dry-run to preview the change without writing.`,
+The path must exist on disk. Directories are recognized automatically and
+their contents tracked recursively. Run ` + "`dotfiles save`" + ` afterwards
+to copy the file into the repository for the first time.`,
 	Args: cobra.ExactArgs(1),
 	RunE: runTrack,
 }
 
 var untrackCmd = &cobra.Command{
 	Use:   "untrack <path>",
-	Short: "Remove a path from the manifest",
-	Long: `Remove a path from the manifest.
+	Short: "Stop tracking a config file or directory",
+	Long: `Stop tracking a path that was previously added with ` + "`dotfiles track`" + `.
 
-The path must be listed under the given tool. The live file is not touched.
-Pass --purge to also delete the saved copy from the repository.
-
-Use --dry-run to preview the change without writing.`,
+The live file is left untouched. Pass --purge to also remove the saved
+copy from the repository.`,
 	Args: cobra.ExactArgs(1),
 	RunE: runUntrack,
 }
