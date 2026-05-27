@@ -44,49 +44,29 @@ func (r Resolver) Resolve(m Manifest) []Spec {
 }
 
 func (r Resolver) resolveTool(tool string, paths []string) []Spec {
-	type item struct {
-		original string
-		resolved string
-		isDir    bool
-	}
-	items := make([]item, 0, len(paths))
-	for _, p := range paths {
-		resolved := expand(p, r.Home)
+	// A trailing slash is the sole signal for directory-ness: resolution is a
+	// pure function of the manifest, never of what currently exists on disk.
+	specs := make([]Spec, len(paths))
+	anchors := make([]string, len(paths))
+	for i, p := range paths {
+		live := expand(p, r.Home)
 		isDir := hasDirMarker(p)
-		if !isDir {
-			st, err := os.Stat(resolved)
-			isDir = err == nil && st.IsDir()
-		}
-		items = append(items, item{p, resolved, isDir})
-	}
-	containers := make([]string, 0, len(items))
-	for _, it := range items {
-		if it.isDir {
-			containers = append(containers, it.resolved)
+		specs[i] = Spec{Tool: tool, LivePath: live, IsDir: isDir}
+		// A directory anchors the common-prefix search at itself; a file
+		// anchors at its parent so siblings share a root.
+		if isDir {
+			anchors[i] = live
 		} else {
-			containers = append(containers, filepath.Dir(it.resolved))
+			anchors[i] = filepath.Dir(live)
 		}
 	}
-	prefix := commonDirPrefix(containers)
-	specs := make([]Spec, 0, len(items))
-	for _, it := range items {
-		rel, err := filepath.Rel(prefix, it.resolved)
+	prefix := commonDirPrefix(anchors)
+	for i := range specs {
+		rel, err := filepath.Rel(prefix, specs[i].LivePath)
 		if err != nil || rel == "" || strings.HasPrefix(rel, "..") {
-			rel = filepath.Base(it.resolved)
+			rel = filepath.Base(specs[i].LivePath)
 		}
-		savedRoot := filepath.Join(r.RepoRoot, "config", tool, rel)
-		isDir := it.isDir
-		if !isDir {
-			if st, err := os.Stat(savedRoot); err == nil && st.IsDir() {
-				isDir = true
-			}
-		}
-		specs = append(specs, Spec{
-			Tool:      tool,
-			LivePath:  it.resolved,
-			SavedPath: savedRoot,
-			IsDir:     isDir,
-		})
+		specs[i].SavedPath = filepath.Join(r.RepoRoot, "config", tool, rel)
 	}
 	return specs
 }
@@ -178,7 +158,7 @@ func walkFiles(root string, set map[string]struct{}) error {
 		return fmt.Errorf("stat %s: %w", root, err)
 	}
 	if !info.IsDir() {
-		return nil
+		return fmt.Errorf("%s: declared as a directory (trailing slash) but is a file", root)
 	}
 	return filepath.WalkDir(root, func(p string, d fs.DirEntry, err error) error {
 		if err != nil {

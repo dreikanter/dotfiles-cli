@@ -45,29 +45,30 @@ func TestResolver_DirectoryByTrailingSlash(t *testing.T) {
 	assert.Equal(t, filepath.Join(repo, "config/nvim"), specs[0].SavedPath)
 }
 
-func TestResolver_DirectoryDetectedOnDisk(t *testing.T) {
+func TestResolver_NoTrailingSlashIsAlwaysFile(t *testing.T) {
 	home := t.TempDir()
 	repo := t.TempDir()
+	// A directory exists on disk on both the live and saved sides, but the
+	// manifest entry has no trailing slash. Resolution must not consult the
+	// filesystem: the entry stays a single-file spec.
 	require.NoError(t, os.MkdirAll(filepath.Join(home, ".config/nvim"), 0o755))
+	require.NoError(t, os.MkdirAll(filepath.Join(repo, "config/nvim"), 0o755))
 	r := Resolver{RepoRoot: repo, Home: home}
 
 	specs := r.Resolve(Manifest{"nvim": {"~/.config/nvim"}})
 	require.Len(t, specs, 1)
-	assert.True(t, specs[0].IsDir, "directory on disk should be classified as dir without trailing slash")
+	assert.False(t, specs[0].IsDir, "no trailing slash must stay a file regardless of disk state")
 }
 
-func TestResolver_DirectoryDetectedFromSavedSide(t *testing.T) {
+func TestResolver_TrailingSlashIsAlwaysDir(t *testing.T) {
 	home := t.TempDir()
 	repo := t.TempDir()
-	// Live path does not exist yet, but saved side is already a directory.
-	savedDir := filepath.Join(repo, "config/agents/code-review")
-	require.NoError(t, os.MkdirAll(savedDir, 0o755))
+	// Nothing exists on disk, but the trailing slash makes it a directory spec.
 	r := Resolver{RepoRoot: repo, Home: home}
 
-	specs := r.Resolve(Manifest{"agents": {filepath.Join(home, ".agents/skills/code-review")}})
+	specs := r.Resolve(Manifest{"nvim": {"~/.config/nvim/"}})
 	require.Len(t, specs, 1)
-	assert.True(t, specs[0].IsDir, "directory on saved side should be classified as dir even when live path is absent")
-	assert.Equal(t, savedDir, specs[0].SavedPath)
+	assert.True(t, specs[0].IsDir, "trailing slash must classify as dir regardless of disk state")
 }
 
 func TestResolver_MultiTool_DeterministicOrder(t *testing.T) {

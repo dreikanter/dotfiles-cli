@@ -76,6 +76,17 @@ func Status(specs []Spec) ([]StatusEntry, error) {
 func compare(live, saved string) (State, string) {
 	li, lerr := os.Stat(live)
 	di, derr := os.Stat(saved)
+	// A legitimate directory spec expands to one entry per file inside the
+	// tree, so compare only ever sees files. A directory on either side means
+	// a single-file entry resolved to a directory on disk — i.e. the manifest
+	// is missing the trailing-slash marker. Surface it before the
+	// missing-side logic so it never masquerades as live/saved-missing.
+	if lerr == nil && li.IsDir() {
+		return StateError, fmt.Sprintf("%s: expected a file but found a directory (missing trailing slash in manifest?)", live)
+	}
+	if derr == nil && di.IsDir() {
+		return StateError, fmt.Sprintf("%s: expected a file but found a directory (missing trailing slash in manifest?)", saved)
+	}
 	switch {
 	case os.IsNotExist(lerr) && os.IsNotExist(derr):
 		return StateNeitherExists, ""
@@ -87,9 +98,6 @@ func compare(live, saved string) (State, string) {
 		return StateLiveMissing, ""
 	case os.IsNotExist(derr):
 		return StateSavedMissing, ""
-	}
-	if li.IsDir() || di.IsDir() {
-		return StateInSync, "" // directories are not compared as units
 	}
 	lb, err := os.ReadFile(live)
 	if err != nil {

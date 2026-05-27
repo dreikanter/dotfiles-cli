@@ -11,7 +11,9 @@ import (
 
 // Manifest maps a tool name to a list of local paths to manage.
 // Paths may use a leading "~" to refer to the user's home directory.
-// A trailing "/" marks a path as a directory.
+// A trailing "/" marks a path as a directory; it is the sole signal for
+// directory-ness. Without it the path is always treated as a single file,
+// regardless of what exists on disk.
 type Manifest map[string][]string
 
 // LoadManifest reads and parses a JSON manifest from path.

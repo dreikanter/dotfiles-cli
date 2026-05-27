@@ -40,7 +40,11 @@ tells the CLI which files to track:
 ```
 
 A trailing `/` marks an entry as a directory (its contents are tracked
-recursively). Files mirror to `<repo>/config/<tool>/<rel>`.
+recursively); without it the entry is a single file. The trailing slash is
+the only signal for directory-ness — it is never guessed from what happens to
+exist on disk, so a directory declared without the slash (or a file declared
+with one) is reported as an error rather than silently misread. Files mirror
+to `<repo>/config/<tool>/<rel>`.
 
 **It copies files rather than symlinking them.** Symlinks break when some apps save their config atomically (write-temp-then-rename), which silently replaces the link with a regular file, so the dotfiles repo stops tracking changes. Copying keeps the repo a plain, predictable mirror.
 

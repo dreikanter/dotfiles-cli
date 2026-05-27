@@ -2,6 +2,23 @@
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-05-27
+
+### Changed
+
+- A manifest path's trailing slash is now the only thing that marks it as a
+  directory. Previously the tool would also guess based on what existed on
+  disk, which could differ between machines. Directory entries must now end
+  with `/`. [#54]
+
+### Fixed
+
+- Mismatches between a manifest entry and what is on disk are now reported
+  loudly instead of being silently misread: a directory declared without a
+  trailing slash, or a file declared with one, surfaces as an error in
+  `status`, `save`, and `install` rather than being skipped or shown as in
+  sync. [#54]
+
 ## [0.1.6] - 2026-05-27
 
 ### Fixed
@@ -54,6 +71,7 @@
 [#23]: https://github.com/dreikanter/dotfiles-cli/issues/23
 [#46]: https://github.com/dreikanter/dotfiles-cli/issues/46
 [#53]: https://github.com/dreikanter/dotfiles-cli/pull/53
+[#54]: https://github.com/dreikanter/dotfiles-cli/pull/54
 
 ## [0.1.2] - 2026-05-04
 

@@ -196,6 +196,19 @@ func TestSync_PruneInstall(t *testing.T) {
 	assert.True(t, os.IsNotExist(err))
 }
 
+func TestSync_DirMarkerOnFileErrors(t *testing.T) {
+	home := t.TempDir()
+	repo := t.TempDir()
+	// Manifest marks the entry as a directory, but the live path is a file.
+	require.NoError(t, os.WriteFile(filepath.Join(home, ".zshrc"), []byte("x"), 0o644))
+	r := Resolver{RepoRoot: repo, Home: home}
+	specs := r.Resolve(Manifest{"shell": {"~/.zshrc/"}})
+
+	_, err := Sync(specs, DirSave, Options{})
+	require.Error(t, err, "a directory-marked path that is actually a file must fail loudly")
+	assert.Contains(t, err.Error(), "declared as a directory")
+}
+
 func TestSync_MissingSourceCountsAsError(t *testing.T) {
 	home := t.TempDir()
 	repo := t.TempDir()
