@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [0.1.6] - 2026-05-27
+
+### Fixed
+
+- `dotfiles install` no longer fails with "source is a directory" for directory entries whose live path does not exist yet but whose saved path is already a directory in the repository. [#53]
+
 ## [0.1.5] - 2026-05-20
 
 ### Added
@@ -47,6 +53,7 @@
 [#22]: https://github.com/dreikanter/dotfiles-cli/issues/22
 [#23]: https://github.com/dreikanter/dotfiles-cli/issues/23
 [#46]: https://github.com/dreikanter/dotfiles-cli/issues/46
+[#53]: https://github.com/dreikanter/dotfiles-cli/pull/53
 
 ## [0.1.2] - 2026-05-04
 
