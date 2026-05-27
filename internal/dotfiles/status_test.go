@@ -68,6 +68,22 @@ func TestStatus_AllStates(t *testing.T) {
 	assert.Equal(t, StateNeitherExists, byTool["f"])
 }
 
+func TestStatus_FileEntryResolvingToDirectoryErrors(t *testing.T) {
+	home := t.TempDir()
+	repo := t.TempDir()
+	// No trailing slash, so the entry is a file spec, but the live path is a
+	// directory on disk. This must surface as an error, not a false in-sync.
+	require.NoError(t, os.MkdirAll(filepath.Join(home, ".config/nvim"), 0o755))
+	r := Resolver{RepoRoot: repo, Home: home}
+	specs := r.Resolve(Manifest{"nvim": {"~/.config/nvim"}})
+
+	entries, err := Status(specs)
+	require.NoError(t, err)
+	require.Len(t, entries, 1)
+	assert.Equal(t, StateError, entries[0].State)
+	assert.Contains(t, entries[0].Error, "expected a file but found a directory")
+}
+
 func TestState_Display(t *testing.T) {
 	cases := map[State]string{
 		StateInSync:        "in sync",
