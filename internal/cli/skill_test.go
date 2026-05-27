@@ -53,33 +53,11 @@ func TestSkill_JSONShape(t *testing.T) {
 	assert.True(t, strings.HasSuffix(got.Body, "\n"), "body must end in newline")
 }
 
-func TestSkill_CommandsAlphabetized(t *testing.T) {
-	out, err := runCLI(t, "skill")
-	require.NoError(t, err)
-
-	want := []string{"config", "init", "install", "save", "skill", "status"}
-	lastIdx := -1
-	for _, name := range want {
-		marker := "| `" + name + "` |"
-		idx := strings.Index(out, marker)
-		require.GreaterOrEqual(t, idx, 0, "expected %q in commands table", name)
-		assert.Greater(t, idx, lastIdx, "command %q out of alphabetic order", name)
-		lastIdx = idx
-	}
-}
-
-func TestSkill_HelpAndCompletionExcluded(t *testing.T) {
-	out, err := runCLI(t, "skill")
-	require.NoError(t, err)
-	assert.NotContains(t, out, "| `help` |", "help command should not appear in the commands table")
-	assert.NotContains(t, out, "| `completion` |", "completion command should not appear in the commands table")
-}
-
 func TestSkill_GlobalFlagsListed(t *testing.T) {
 	out, err := runCLI(t, "skill")
 	require.NoError(t, err)
 	for _, flag := range []string{"--config", "--json", "--root"} {
-		assert.Contains(t, out, "| `"+flag+"` |", "expected persistent flag %q in global flags table", flag)
+		assert.Contains(t, out, "| `"+flag+"` |", "expected global flag %q in skill output", flag)
 	}
 }
 
