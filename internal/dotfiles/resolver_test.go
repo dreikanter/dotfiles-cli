@@ -56,6 +56,20 @@ func TestResolver_DirectoryDetectedOnDisk(t *testing.T) {
 	assert.True(t, specs[0].IsDir, "directory on disk should be classified as dir without trailing slash")
 }
 
+func TestResolver_DirectoryDetectedFromSavedSide(t *testing.T) {
+	home := t.TempDir()
+	repo := t.TempDir()
+	// Live path does not exist yet, but saved side is already a directory.
+	savedDir := filepath.Join(repo, "config/agents/code-review")
+	require.NoError(t, os.MkdirAll(savedDir, 0o755))
+	r := Resolver{RepoRoot: repo, Home: home}
+
+	specs := r.Resolve(Manifest{"agents": {filepath.Join(home, ".agents/skills/code-review")}})
+	require.Len(t, specs, 1)
+	assert.True(t, specs[0].IsDir, "directory on saved side should be classified as dir even when live path is absent")
+	assert.Equal(t, savedDir, specs[0].SavedRoot)
+}
+
 func TestResolver_MultiTool_DeterministicOrder(t *testing.T) {
 	home := t.TempDir()
 	repo := t.TempDir()

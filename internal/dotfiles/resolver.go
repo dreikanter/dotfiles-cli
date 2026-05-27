@@ -74,11 +74,18 @@ func (r Resolver) resolveTool(tool string, paths []string) []Spec {
 		if err != nil || rel == "" || strings.HasPrefix(rel, "..") {
 			rel = filepath.Base(it.resolved)
 		}
+		savedRoot := filepath.Join(r.RepoRoot, "config", tool, rel)
+		isDir := it.isDir
+		if !isDir {
+			if st, err := os.Stat(savedRoot); err == nil && st.IsDir() {
+				isDir = true
+			}
+		}
 		specs = append(specs, Spec{
 			Tool:      tool,
 			LiveRoot:  it.resolved,
-			SavedRoot: filepath.Join(r.RepoRoot, "config", tool, rel),
-			IsDir:     it.isDir,
+			SavedRoot: savedRoot,
+			IsDir:     isDir,
 		})
 	}
 	return specs
