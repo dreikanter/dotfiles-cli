@@ -232,9 +232,9 @@ func destinationSet(specs []Spec, dir Direction) (map[string]struct{}, []string)
 		if !s.IsDir {
 			continue
 		}
-		destRoot := s.SavedRoot
+		destRoot := s.SavedPath
 		if dir == DirInstall {
-			destRoot = s.LiveRoot
+			destRoot = s.LivePath
 		}
 		dirs = append(dirs, destRoot)
 		entries, err := expandSource(s, dir)

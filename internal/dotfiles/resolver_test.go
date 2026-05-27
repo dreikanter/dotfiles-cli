@@ -17,8 +17,8 @@ func TestResolver_SingleFile(t *testing.T) {
 	specs := r.Resolve(Manifest{"git": {"~/.gitconfig"}})
 	require.Len(t, specs, 1)
 	assert.Equal(t, "git", specs[0].Tool)
-	assert.Equal(t, filepath.Join(home, ".gitconfig"), specs[0].LiveRoot)
-	assert.Equal(t, filepath.Join(repo, "config/git/.gitconfig"), specs[0].SavedRoot)
+	assert.Equal(t, filepath.Join(home, ".gitconfig"), specs[0].LivePath)
+	assert.Equal(t, filepath.Join(repo, "config/git/.gitconfig"), specs[0].SavedPath)
 	assert.False(t, specs[0].IsDir)
 }
 
@@ -29,8 +29,8 @@ func TestResolver_MultipleFilesShareCommonRoot(t *testing.T) {
 
 	specs := r.Resolve(Manifest{"shell": {"~/.zshrc", "~/.zprofile"}})
 	require.Len(t, specs, 2)
-	assert.Equal(t, filepath.Join(repo, "config/shell/.zshrc"), specs[0].SavedRoot)
-	assert.Equal(t, filepath.Join(repo, "config/shell/.zprofile"), specs[1].SavedRoot)
+	assert.Equal(t, filepath.Join(repo, "config/shell/.zshrc"), specs[0].SavedPath)
+	assert.Equal(t, filepath.Join(repo, "config/shell/.zprofile"), specs[1].SavedPath)
 }
 
 func TestResolver_DirectoryByTrailingSlash(t *testing.T) {
@@ -41,8 +41,8 @@ func TestResolver_DirectoryByTrailingSlash(t *testing.T) {
 	specs := r.Resolve(Manifest{"nvim": {"~/.config/nvim/"}})
 	require.Len(t, specs, 1)
 	assert.True(t, specs[0].IsDir)
-	assert.Equal(t, filepath.Join(home, ".config/nvim"), specs[0].LiveRoot)
-	assert.Equal(t, filepath.Join(repo, "config/nvim"), specs[0].SavedRoot)
+	assert.Equal(t, filepath.Join(home, ".config/nvim"), specs[0].LivePath)
+	assert.Equal(t, filepath.Join(repo, "config/nvim"), specs[0].SavedPath)
 }
 
 func TestResolver_DirectoryDetectedOnDisk(t *testing.T) {
@@ -67,7 +67,7 @@ func TestResolver_DirectoryDetectedFromSavedSide(t *testing.T) {
 	specs := r.Resolve(Manifest{"agents": {filepath.Join(home, ".agents/skills/code-review")}})
 	require.Len(t, specs, 1)
 	assert.True(t, specs[0].IsDir, "directory on saved side should be classified as dir even when live path is absent")
-	assert.Equal(t, savedDir, specs[0].SavedRoot)
+	assert.Equal(t, savedDir, specs[0].SavedPath)
 }
 
 func TestResolver_MultiTool_DeterministicOrder(t *testing.T) {
@@ -85,7 +85,7 @@ func TestResolver_MultiTool_DeterministicOrder(t *testing.T) {
 }
 
 func TestExpandUnion_File(t *testing.T) {
-	es, err := ExpandAllUnion([]Spec{{Tool: "git", LiveRoot: "/x/.gitconfig", SavedRoot: "/r/config/git/.gitconfig"}})
+	es, err := ExpandAllUnion([]Spec{{Tool: "git", LivePath: "/x/.gitconfig", SavedPath: "/r/config/git/.gitconfig"}})
 	require.NoError(t, err)
 	require.Len(t, es, 1)
 	assert.Equal(t, "/x/.gitconfig", es[0].Live)
@@ -105,7 +105,7 @@ func TestExpandUnion_Dir(t *testing.T) {
 	require.NoError(t, os.MkdirAll(savedRoot, 0o755))
 	require.NoError(t, os.WriteFile(filepath.Join(savedRoot, "extra.lua"), []byte("z"), 0o644))
 
-	es, err := ExpandAllUnion([]Spec{{Tool: "nvim", LiveRoot: liveRoot, SavedRoot: savedRoot, IsDir: true}})
+	es, err := ExpandAllUnion([]Spec{{Tool: "nvim", LivePath: liveRoot, SavedPath: savedRoot, IsDir: true}})
 	require.NoError(t, err)
 	require.Len(t, es, 3)
 	rels := []string{}
