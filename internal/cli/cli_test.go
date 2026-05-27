@@ -43,6 +43,9 @@ func resetFlags() {
 	skillInstall = false
 	skillAgent = ""
 	skillForce = false
+	trackTool = ""
+	untrackTool = ""
+	untrackPurge = false
 	resetCobraFlagState(rootCmd)
 }
 

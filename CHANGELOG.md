@@ -2,6 +2,15 @@
 
 ## [Unreleased]
 
+### Added
+
+- `dotfiles track --tool <name> <path>` adds a path to the manifest. The path
+  must exist on disk; directories are detected automatically and stored with a
+  trailing slash. Paths under HOME are stored as `~/...` entries.
+- `dotfiles untrack --tool <name> <path>` removes a path from the manifest.
+  Pass `--purge` to also delete the saved copy from the repository. Both
+  commands support `--dry-run` and `--json`.
+
 ## [0.2.0] - 2026-05-27
 
 ### Changed

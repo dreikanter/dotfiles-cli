@@ -383,6 +383,9 @@ func renderSkill(root *cobra.Command) Skill {
 	b.WriteString("    }\n\n")
 	b.WriteString("The manifest is the single source of truth: the CLI never touches\n")
 	b.WriteString("files outside the resolved live-to-saved mapping.\n\n")
+	b.WriteString("Use `dotfiles track --tool <name> <path>` to add a path and\n")
+	b.WriteString("`dotfiles untrack --tool <name> <path>` to remove one, rather than\n")
+	b.WriteString("editing `dotfiles.json` by hand.\n\n")
 
 	b.WriteString("## JSON output and errors\n\n")
 	b.WriteString("Every command accepts `--json` to emit a single JSON object on stdout.\n")

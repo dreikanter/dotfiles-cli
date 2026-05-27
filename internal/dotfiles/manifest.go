@@ -1,6 +1,7 @@
 package dotfiles
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -63,4 +64,51 @@ func expand(p, home string) string {
 // the path as a directory via a trailing slash.
 func hasDirMarker(original string) bool {
 	return strings.HasSuffix(original, "/")
+}
+
+// Expand resolves a manifest path to an absolute filesystem path.
+// It expands a leading "~" and strips any trailing slash marker.
+func Expand(p, home string) string {
+	return expand(p, home)
+}
+
+// ManifestPath converts abs to the storage form used in dotfiles.json.
+// If abs is under home it is returned as "~/..." ; otherwise as-is.
+func ManifestPath(abs, home string) string {
+	rel, err := filepath.Rel(home, abs)
+	if err == nil && !strings.HasPrefix(rel, "..") {
+		return "~/" + rel
+	}
+	return abs
+}
+
+// SaveManifest writes m to path in the canonical dotfiles.json format:
+// one tool per line with its paths as a compact JSON array, keys sorted.
+func SaveManifest(path string, m Manifest) error {
+	var buf bytes.Buffer
+	buf.WriteString("{\n")
+	tools := m.Tools()
+	for i, tool := range tools {
+		toolJSON, _ := json.Marshal(tool)
+		buf.WriteString("  ")
+		buf.Write(toolJSON)
+		buf.WriteString(": [")
+		for j, p := range m[tool] {
+			if j > 0 {
+				buf.WriteString(", ")
+			}
+			pJSON, _ := json.Marshal(p)
+			buf.Write(pJSON)
+		}
+		buf.WriteByte(']')
+		if i < len(tools)-1 {
+			buf.WriteByte(',')
+		}
+		buf.WriteByte('\n')
+	}
+	buf.WriteString("}\n")
+	if err := os.WriteFile(path, buf.Bytes(), 0o644); err != nil {
+		return fmt.Errorf("write %s: %w", path, err)
+	}
+	return nil
 }
