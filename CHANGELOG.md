@@ -2,6 +2,17 @@
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-06-23
+
+### Fixed
+
+- `save` and `install` no longer overwrite a newer file with an older one. Each
+  now syncs only files whose destination is obsolete (older than the source) and
+  leaves a newer destination untouched, reporting it as `skip` (with a `skipped`
+  count in the summary line and `--json` output). Previously `save` could clobber
+  a newer saved copy and `install` could clobber a newer live file. Use
+  `dotfiles status` to see which side is newer. [#57]
+
 ## [0.2.0] - 2026-05-27
 
 ### Added
@@ -82,6 +93,7 @@
 [#53]: https://github.com/dreikanter/dotfiles-cli/pull/53
 [#54]: https://github.com/dreikanter/dotfiles-cli/pull/54
 [#55]: https://github.com/dreikanter/dotfiles-cli/pull/55
+[#57]: https://github.com/dreikanter/dotfiles-cli/pull/57
 
 ## [0.1.2] - 2026-05-04
 

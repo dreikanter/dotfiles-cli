@@ -20,6 +20,7 @@ type syncResponse struct {
 	DryRun    bool              `json:"dryRun"`
 	Copied    int               `json:"copied"`
 	Unchanged int               `json:"unchanged"`
+	Skipped   int               `json:"skipped"`
 	Removed   int               `json:"removed"`
 	Errors    int               `json:"errors"`
 	Filter    *syncFilter       `json:"filter,omitempty"`
@@ -33,10 +34,11 @@ const syncJSONShape = `JSON output shape:
     "dryRun":    bool,
     "copied":    N,
     "unchanged": N,
+    "skipped":   N,
     "removed":   N,
     "errors":    N,
     "filter":    {"tool": "git", "files": [...]} | omitted,
-    "actions":   [{"action": "copy"|"unchanged"|"prune"|"error", "from", "to", "path", "message"}, ...]
+    "actions":   [{"action": "copy"|"unchanged"|"skip"|"prune"|"error", "from", "to", "path", "message"}, ...]
   }`
 
 const syncExamples = `  dotfiles save --tool git
@@ -107,6 +109,7 @@ func runSync(cmd *cobra.Command, dir dotfiles.Direction, name, header string) er
 			DryRun:    dryRun,
 			Copied:    res.Copied,
 			Unchanged: res.Unchanged,
+			Skipped:   res.Skipped,
 			Removed:   res.Removed,
 			Errors:    res.Errors,
 			Filter:    filter,
@@ -120,6 +123,9 @@ func runSync(cmd *cobra.Command, dir dotfiles.Direction, name, header string) er
 		return nil
 	}
 	fmt.Fprintf(out, "Copied: %d; unchanged: %d", res.Copied, res.Unchanged)
+	if res.Skipped > 0 {
+		fmt.Fprintf(out, "; skipped: %d", res.Skipped)
+	}
 	if prune {
 		fmt.Fprintf(out, "; removed: %d", res.Removed)
 	}
