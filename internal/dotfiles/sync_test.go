@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -64,6 +65,102 @@ func TestSync_Install(t *testing.T) {
 	assert.Equal(t, 0, res.Errors)
 	mustEqualFile(t, filepath.Join(home, ".gitconfig"), "changed\n")
 	mustEqualFile(t, filepath.Join(home, ".config/nvim/init.lua"), "init\n")
+}
+
+// olderNewer stamps two paths with mod times an hour apart so the newer-wins
+// guard has an unambiguous ordering regardless of filesystem timestamp
+// granularity.
+func olderNewer(t *testing.T, older, newer string) {
+	t.Helper()
+	past := time.Now().Add(-time.Hour)
+	now := time.Now()
+	require.NoError(t, os.Chtimes(older, past, past))
+	require.NoError(t, os.Chtimes(newer, now, now))
+}
+
+func TestSync_SaveSkipsNewerSaved(t *testing.T) {
+	home, repo, specs := scenario(t)
+	_, err := Sync(specs, DirSave, Options{})
+	require.NoError(t, err)
+
+	live := filepath.Join(home, ".gitconfig")
+	saved := filepath.Join(repo, "config/git/.gitconfig")
+	// The saved copy diverges and is newer than the live file.
+	require.NoError(t, os.WriteFile(saved, []byte("[user]\n\tname = Repo\n"), 0o644))
+	olderNewer(t, live, saved)
+
+	var buf bytes.Buffer
+	res, err := Sync(specs, DirSave, Options{Out: &buf})
+	require.NoError(t, err)
+	assert.Equal(t, 0, res.Copied, "a newer saved copy must not be overwritten by an older live file")
+	assert.Equal(t, 1, res.Skipped)
+	assert.Equal(t, 3, res.Unchanged)
+	assert.Contains(t, buf.String(), "skip ")
+	assert.Contains(t, buf.String(), "saved is newer")
+	// The newer saved copy is preserved verbatim.
+	mustEqualFile(t, saved, "[user]\n\tname = Repo\n")
+}
+
+func TestSync_InstallSkipsNewerLive(t *testing.T) {
+	home, repo, specs := scenario(t)
+	_, err := Sync(specs, DirSave, Options{})
+	require.NoError(t, err)
+
+	live := filepath.Join(home, ".gitconfig")
+	saved := filepath.Join(repo, "config/git/.gitconfig")
+	// The live file diverges and is newer than the saved copy.
+	require.NoError(t, os.WriteFile(live, []byte("[user]\n\tname = Local\n"), 0o644))
+	olderNewer(t, saved, live)
+
+	var buf bytes.Buffer
+	res, err := Sync(specs, DirInstall, Options{Out: &buf})
+	require.NoError(t, err)
+	assert.Equal(t, 0, res.Copied, "a newer live file must not be overwritten by an older saved copy")
+	assert.Equal(t, 1, res.Skipped)
+	assert.Contains(t, buf.String(), "live is newer")
+	// The newer live file is preserved verbatim.
+	mustEqualFile(t, live, "[user]\n\tname = Local\n")
+}
+
+func TestSync_SaveCopiesObsoleteSavedAndSkipsNewer(t *testing.T) {
+	home, repo, specs := scenario(t)
+	_, err := Sync(specs, DirSave, Options{})
+	require.NoError(t, err)
+
+	// .gitconfig: live is newer -> obsolete saved copy gets overwritten.
+	liveCfg := filepath.Join(home, ".gitconfig")
+	savedCfg := filepath.Join(repo, "config/git/.gitconfig")
+	require.NoError(t, os.WriteFile(liveCfg, []byte("[user]\n\tname = Local\n"), 0o644))
+	olderNewer(t, savedCfg, liveCfg)
+
+	// .zshrc: saved is newer -> preserved.
+	liveRc := filepath.Join(home, ".zshrc")
+	savedRc := filepath.Join(repo, "config/shell/.zshrc")
+	require.NoError(t, os.WriteFile(savedRc, []byte("export A=2\n"), 0o644))
+	olderNewer(t, liveRc, savedRc)
+
+	res, err := Sync(specs, DirSave, Options{})
+	require.NoError(t, err)
+	assert.Equal(t, 1, res.Copied)
+	assert.Equal(t, 1, res.Skipped)
+	assert.Equal(t, 2, res.Unchanged)
+	mustEqualFile(t, savedCfg, "[user]\n\tname = Local\n") // obsolete copy refreshed
+	mustEqualFile(t, savedRc, "export A=2\n")              // newer copy preserved
+}
+
+func TestSync_SkipReportedInDryRun(t *testing.T) {
+	home, repo, specs := scenario(t)
+	_, err := Sync(specs, DirSave, Options{})
+	require.NoError(t, err)
+
+	saved := filepath.Join(repo, "config/git/.gitconfig")
+	require.NoError(t, os.WriteFile(saved, []byte("[user]\n\tname = Repo\n"), 0o644))
+	olderNewer(t, filepath.Join(home, ".gitconfig"), saved)
+
+	res, err := Sync(specs, DirSave, Options{DryRun: true})
+	require.NoError(t, err)
+	assert.Equal(t, 1, res.Skipped)
+	assert.Equal(t, 0, res.Copied)
 }
 
 func TestSync_DryRun(t *testing.T) {

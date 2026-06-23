@@ -57,6 +57,12 @@ to `<repo>/config/<tool>/<rel>`.
 - `dotfiles config` — print the resolved live-to-saved mapping
 - `dotfiles skill` — print or install an agent skill describing this CLI
 
+`save` and `install` only refresh files whose destination is **obsolete** — older
+than the source. When the destination is the newer of the two it is left
+untouched and reported as `skip`, so saving never overwrites a newer repo copy
+and installing never overwrites a newer live file. Use `dotfiles status` to see
+which side is newer, then sync in the direction you want.
+
 ### Flags
 
 These flags are accepted by every command:

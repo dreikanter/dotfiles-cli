@@ -2,6 +2,15 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- `save` and `install` no longer overwrite a newer file with an older one. Each
+  now syncs only files whose destination is obsolete (older than the source) and
+  leaves a newer destination untouched, reporting it as `skip` (with a `skipped`
+  count in the summary line and `--json` output). Previously `save` could clobber
+  a newer saved copy and `install` could clobber a newer live file. Use
+  `dotfiles status` to see which side is newer.
+
 ## [0.2.0] - 2026-05-27
 
 ### Added

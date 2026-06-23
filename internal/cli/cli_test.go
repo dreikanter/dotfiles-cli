@@ -10,6 +10,7 @@ import (
 	"runtime"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -331,6 +332,70 @@ func TestCLI_SaveJSONIncludesUnchanged(t *testing.T) {
 	for _, a := range resp.Actions {
 		assert.Equal(t, "unchanged", a.Action)
 	}
+}
+
+// makeNewer stamps two paths an hour apart so the newer-wins guard is
+// unambiguous regardless of filesystem timestamp granularity.
+func makeNewer(t *testing.T, older, newer string) {
+	t.Helper()
+	past := time.Now().Add(-time.Hour)
+	now := time.Now()
+	require.NoError(t, os.Chtimes(older, past, past))
+	require.NoError(t, os.Chtimes(newer, now, now))
+}
+
+func TestCLI_SaveSkipsNewerSaved(t *testing.T) {
+	repo, home := stageRepoAndHome(t)
+	_, err := runCLI(t, "--root", repo, "install")
+	require.NoError(t, err)
+
+	// The saved copy diverges and is newer than the installed live file.
+	saved := filepath.Join(repo, "config/git/.gitconfig")
+	require.NoError(t, os.WriteFile(saved, []byte("repo-side\n"), 0o644))
+	makeNewer(t, filepath.Join(home, ".gitconfig"), saved)
+
+	out, err := runCLI(t, "--root", repo, "save")
+	require.NoError(t, err)
+	assert.Contains(t, out, "skip ")
+	assert.Contains(t, out, "saved is newer")
+	assert.Contains(t, out, "skipped: 1")
+	assert.Contains(t, out, "Copied: 0")
+	// The newer saved copy survives an older live file.
+	got, err := os.ReadFile(saved)
+	require.NoError(t, err)
+	assert.Equal(t, "repo-side\n", string(got))
+}
+
+func TestCLI_SaveSkipJSON(t *testing.T) {
+	repo, home := stageRepoAndHome(t)
+	_, err := runCLI(t, "--root", repo, "install")
+	require.NoError(t, err)
+
+	saved := filepath.Join(repo, "config/git/.gitconfig")
+	require.NoError(t, os.WriteFile(saved, []byte("repo-side\n"), 0o644))
+	makeNewer(t, filepath.Join(home, ".gitconfig"), saved)
+
+	out, err := runCLI(t, "--root", repo, "save", "--json")
+	require.NoError(t, err)
+	var resp struct {
+		Copied  int `json:"copied"`
+		Skipped int `json:"skipped"`
+		Actions []struct {
+			Action  string `json:"action"`
+			Message string `json:"message"`
+		} `json:"actions"`
+	}
+	require.NoError(t, json.Unmarshal([]byte(out), &resp))
+	assert.Equal(t, 0, resp.Copied)
+	assert.Equal(t, 1, resp.Skipped)
+	var skips int
+	for _, a := range resp.Actions {
+		if a.Action == "skip" {
+			skips++
+			assert.Equal(t, "saved is newer", a.Message)
+		}
+	}
+	assert.Equal(t, 1, skips)
 }
 
 func TestCLI_StatusShowsToolName(t *testing.T) {
