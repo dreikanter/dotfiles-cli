@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"text/tabwriter"
 
 	"github.com/spf13/cobra"
 )
@@ -65,6 +66,8 @@ type agentTarget struct {
 //   - "overwrite" — file existed with different content; --force was set.
 //   - "skip"      — file existed with byte-identical content; no-op.
 //   - "conflict"  — file existed with different content; --force was NOT set.
+//
+// installReasons carries the plain-text explanation for each of them.
 type installAction struct {
 	Agent  string `json:"agent"`
 	Path   string `json:"path"`
@@ -74,6 +77,16 @@ type installAction struct {
 
 type installResponse struct {
 	Actions []installAction `json:"actions"`
+}
+
+// installReasons explains why an action was chosen, so the plain-text output
+// says more than the bare verb. "create" needs no explanation and is absent.
+// The wording is tense-neutral, because dry-run output has to stay
+// byte-identical to a real run.
+var installReasons = map[string]string{
+	"skip":      "already up to date",
+	"overwrite": "replacing local changes",
+	"conflict":  "edited locally, pass --force to replace",
 }
 
 // agents is the registry of supported install targets. Add a new entry to
@@ -131,6 +144,10 @@ values: claude. Existing files are left alone unless --force is set;
 byte-identical existing files are reported as "skip" and exit zero.
 Use -n/--dry-run to preview install actions without writing.
 
+Plain-text install output is one line per agent — agent, action, path, and
+the reason the action was chosen — with home directory paths shortened to ~.
+Use --json for machine-readable output.
+
 ` + skillJSONShape,
 	Example: `  dotfiles skill
   dotfiles skill --json | jq .
@@ -185,19 +202,46 @@ func runSkillInstall(cmd *cobra.Command, skill Skill) error {
 			return err
 		}
 	} else {
+		// An unresolvable home dir just means no abbreviation happens.
+		home, _ := os.UserHomeDir()
+		tw := tabwriter.NewWriter(out, 0, 0, 2, ' ', 0)
 		for _, a := range actions {
-			line := fmt.Sprintf("%s\t%s\t%s", a.Action, a.Agent, a.Path)
-			if a.Error != "" {
-				line += "\t" + a.Error
-			}
-			fmt.Fprintln(out, line)
+			fmt.Fprintln(tw, abbrevHome(installLine(a), home))
 		}
+		_ = tw.Flush()
 	}
 
 	if installHasFailures(actions) {
 		return errSilent
 	}
 	return nil
+}
+
+// installLine renders one action as tab-separated columns: agent, action,
+// path, and the parenthesized reason the action was chosen. A failed target
+// reports the action word "error" with the message as its reason.
+func installLine(a installAction) string {
+	action, reason := a.Action, installReasons[a.Action]
+	if a.Error != "" {
+		action, reason = "error", a.Error
+	}
+	// Pad the action to the width of the longest word so the columns land in
+	// the same place across runs, not just within one run's output.
+	line := fmt.Sprintf("%s\t%-9s\t%s", a.Agent, action, a.Path)
+	if reason != "" {
+		line += "\t(" + reason + ")"
+	}
+	return line
+}
+
+// abbrevHome shortens home directory paths to ~ so the reason stays on screen
+// instead of being pushed off the right edge. It rewrites paths embedded in
+// messages too, hence the substring replacement.
+func abbrevHome(s, home string) string {
+	if home == "" || home == string(filepath.Separator) {
+		return s
+	}
+	return strings.ReplaceAll(s, home, "~")
 }
 
 // planInstall returns the action that running install for target would take,
@@ -217,7 +261,7 @@ func planInstall(skill Skill, target agentTarget, force bool) installAction {
 	// The command never creates an unfamiliar agent directory.
 	skillsDir := filepath.Dir(filepath.Dir(path))
 	if st, statErr := os.Stat(skillsDir); statErr != nil || !st.IsDir() {
-		a.Error = fmt.Sprintf("agent %q skills directory missing: %s", target.Name, skillsDir)
+		a.Error = fmt.Sprintf("no skills directory at %s", skillsDir)
 		return a
 	}
 

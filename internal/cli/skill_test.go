@@ -279,6 +279,64 @@ func TestSkill_InstallAutoDetectMultiAgent(t *testing.T) {
 	require.FileExists(t, fakePath)
 }
 
+// squeeze collapses the column padding of an install line so assertions can
+// describe the line without hard-coding tabwriter's spacing.
+func squeeze(s string) string {
+	return strings.Join(strings.Fields(strings.TrimSpace(s)), " ")
+}
+
+func TestSkill_InstallPlainTextReasons(t *testing.T) {
+	_, skillPath := installSandbox(t)
+
+	const path = "~/.claude/skills/dotfiles/SKILL.md"
+
+	create, err := runCLI(t, "skill", "--install", "--agent=claude")
+	require.NoError(t, err)
+	assert.Equal(t, "claude create "+path, squeeze(create))
+
+	skip, err := runCLI(t, "skill", "--install", "--agent=claude")
+	require.NoError(t, err)
+	assert.Equal(t, "claude skip "+path+" (already up to date)", squeeze(skip))
+
+	// --force on an up-to-date file still skips; the reason must say why.
+	forced, err := runCLI(t, "skill", "--install", "--agent=claude", "--force")
+	require.NoError(t, err)
+	assert.Equal(t, skip, forced, "--force must not change an up-to-date report")
+
+	require.NoError(t, os.WriteFile(skillPath, []byte("MUTATED\n"), 0o644))
+
+	conflict, err := runCLI(t, "skill", "--install", "--agent=claude")
+	require.Error(t, err)
+	assert.Equal(t, "claude conflict "+path+" (edited locally, pass --force to replace)", squeeze(conflict))
+
+	overwrite, err := runCLI(t, "skill", "--install", "--agent=claude", "--force")
+	require.NoError(t, err)
+	assert.Equal(t, "claude overwrite "+path+" (replacing local changes)", squeeze(overwrite))
+}
+
+func TestSkill_InstallPlainTextDryRunMatchesRealRun(t *testing.T) {
+	installSandbox(t)
+
+	preview, err := runCLI(t, "skill", "--install", "--agent=claude", "--dry-run")
+	require.NoError(t, err)
+	real, err := runCLI(t, "skill", "--install", "--agent=claude")
+	require.NoError(t, err)
+	assert.Equal(t, preview, real, "dry-run output must be byte-identical to a real run")
+}
+
+func TestSkill_InstallPlainTextError(t *testing.T) {
+	// Sandbox HOME without creating .claude/skills/.
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+
+	out, err := runCLI(t, "skill", "--install", "--agent=claude")
+	require.Error(t, err)
+	assert.Equal(t,
+		"claude error ~/.claude/skills/dotfiles/SKILL.md (no skills directory at ~/.claude/skills)",
+		squeeze(out))
+	assert.NotContains(t, out, home, "home directory must be abbreviated to ~")
+}
+
 func TestSkill_ForceRequiresInstall(t *testing.T) {
 	out, err := runCLI(t, "skill", "--force", "--json")
 	require.Error(t, err)
@@ -303,5 +361,5 @@ func TestSkill_InstallSkillsDirMissing(t *testing.T) {
 	var resp installJSONResp
 	require.NoError(t, json.Unmarshal([]byte(out), &resp))
 	require.Len(t, resp.Actions, 1)
-	assert.Contains(t, resp.Actions[0].Error, "skills directory missing")
+	assert.Contains(t, resp.Actions[0].Error, "no skills directory at")
 }
