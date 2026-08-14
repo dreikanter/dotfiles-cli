@@ -7,7 +7,7 @@
 - `skill --install` now explains each action instead of printing a bare verb:
   every line names the agent, the action, the target path with `~` for the home
   directory, and the reason (`skip` says the file is already up to date,
-  `conflict` says to pass `--force`). `--json` output is unchanged.
+  `conflict` says to pass `--force`). `--json` output is unchanged. [#59]
 
 ## [0.2.1] - 2026-06-23
 
@@ -101,6 +101,7 @@
 [#54]: https://github.com/dreikanter/dotfiles-cli/pull/54
 [#55]: https://github.com/dreikanter/dotfiles-cli/pull/55
 [#57]: https://github.com/dreikanter/dotfiles-cli/pull/57
+[#59]: https://github.com/dreikanter/dotfiles-cli/pull/59
 
 ## [0.1.2] - 2026-05-04
 
