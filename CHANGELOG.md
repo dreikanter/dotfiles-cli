@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.2.2] - 2026-08-14
+
 ### Changed
 
 - `skill --install` now explains each action instead of printing a bare verb:
@@ -9,7 +11,7 @@
   directory, and the reason (`skip` says the file is already up to date,
   `conflict` says to pass `--force`). `--json` output is unchanged. [#59]
 - Building from source now requires Go 1.25.8 or newer, following a refresh of
-  the development dependencies.
+  the development dependencies. [#60]
 
 ## [0.2.1] - 2026-06-23
 
@@ -104,6 +106,7 @@
 [#55]: https://github.com/dreikanter/dotfiles-cli/pull/55
 [#57]: https://github.com/dreikanter/dotfiles-cli/pull/57
 [#59]: https://github.com/dreikanter/dotfiles-cli/pull/59
+[#60]: https://github.com/dreikanter/dotfiles-cli/pull/60
 
 ## [0.1.2] - 2026-05-04
 
