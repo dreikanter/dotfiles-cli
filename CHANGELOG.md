@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+### Changed
+
+- `skill --install` now explains each action instead of printing a bare verb:
+  every line names the agent, the action, the target path with `~` for the home
+  directory, and the reason (`skip` says the file is already up to date,
+  `conflict` says to pass `--force`). `--json` output is unchanged.
+
 ## [0.2.1] - 2026-06-23
 
 ### Fixed
