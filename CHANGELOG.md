@@ -8,6 +8,8 @@
   every line names the agent, the action, the target path with `~` for the home
   directory, and the reason (`skip` says the file is already up to date,
   `conflict` says to pass `--force`). `--json` output is unchanged. [#59]
+- Building from source now requires Go 1.25.8 or newer, following a refresh of
+  the development dependencies.
 
 ## [0.2.1] - 2026-06-23
 
