@@ -50,7 +50,7 @@ func (r Resolver) resolveTool(tool string, paths []string) []Spec {
 	specs := make([]Spec, len(paths))
 	anchors := make([]string, len(paths))
 	for i, p := range paths {
-		live := expand(p, r.Home)
+		live := Expand(p, r.Home)
 		isDir := hasDirMarker(p)
 		specs[i] = Spec{Tool: tool, LivePath: live, IsDir: isDir}
 		// A directory anchors the common-prefix search at itself; a file

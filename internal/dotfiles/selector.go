@@ -102,5 +102,5 @@ func (s Selector) ResolvedFiles(home string) []string {
 }
 
 func resolveFileFilter(p, home string) (string, error) {
-	return filepath.Abs(expand(p, home))
+	return filepath.Abs(Expand(p, home))
 }
