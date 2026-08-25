@@ -3,9 +3,10 @@ package dotfiles
 import (
 	"fmt"
 	"io/fs"
+	"maps"
 	"os"
 	"path/filepath"
-	"sort"
+	"slices"
 	"strings"
 )
 
@@ -107,13 +108,8 @@ func expandSource(s Spec, dir Direction) ([]Entry, error) {
 }
 
 func relsToEntries(s Spec, rels map[string]struct{}) []Entry {
-	keys := make([]string, 0, len(rels))
-	for k := range rels {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-	out := make([]Entry, 0, len(keys))
-	for _, rel := range keys {
+	out := make([]Entry, 0, len(rels))
+	for _, rel := range slices.Sorted(maps.Keys(rels)) {
 		out = append(out, Entry{
 			Tool:  s.Tool,
 			Live:  filepath.Join(s.LivePath, rel),
@@ -195,10 +191,7 @@ func commonDirPrefix(paths []string) string {
 func sharedDir(a, b string) string {
 	aParts := splitPath(a)
 	bParts := splitPath(b)
-	n := len(aParts)
-	if len(bParts) < n {
-		n = len(bParts)
-	}
+	n := min(len(aParts), len(bParts))
 	i := 0
 	for i < n && aParts[i] == bParts[i] {
 		i++
@@ -215,7 +208,7 @@ func splitPath(p string) []string {
 	if filepath.IsAbs(p) {
 		parts = append(parts, string(filepath.Separator))
 	}
-	for _, seg := range strings.Split(p, string(filepath.Separator)) {
+	for seg := range strings.SplitSeq(p, string(filepath.Separator)) {
 		if seg != "" {
 			parts = append(parts, seg)
 		}

@@ -4,9 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"os"
 	"path/filepath"
-	"sort"
+	"slices"
 	"strings"
 )
 
@@ -40,12 +41,7 @@ func LoadManifest(path string) (Manifest, error) {
 
 // Tools returns the manifest's tool names in deterministic order.
 func (m Manifest) Tools() []string {
-	out := make([]string, 0, len(m))
-	for k := range m {
-		out = append(out, k)
-	}
-	sort.Strings(out)
-	return out
+	return slices.Sorted(maps.Keys(m))
 }
 
 // expand resolves a leading "~" and trims the trailing directory marker.
