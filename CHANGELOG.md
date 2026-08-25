@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [0.2.4] - 2026-08-25
+
+### Changed
+
+- Building from source now requires Go 1.27 or newer. [#63]
+
 ## [0.2.3] - 2026-08-19
 
 ### Changed
@@ -113,6 +119,7 @@
 [#57]: https://github.com/dreikanter/dotfiles-cli/pull/57
 [#59]: https://github.com/dreikanter/dotfiles-cli/pull/59
 [#60]: https://github.com/dreikanter/dotfiles-cli/pull/60
+[#63]: https://github.com/dreikanter/dotfiles-cli/pull/63
 
 ## [0.1.2] - 2026-05-04
 

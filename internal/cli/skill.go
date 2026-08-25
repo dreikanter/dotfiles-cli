@@ -388,15 +388,14 @@ func loadSkill() Skill {
 		panic("skill.md: missing opening frontmatter delimiter")
 	}
 	rest := skillContent[len(openDelim):]
-	idx := strings.Index(rest, closeDelim)
-	if idx < 0 {
+	fm, body, ok := strings.Cut(rest, closeDelim)
+	if !ok {
 		panic("skill.md: missing closing frontmatter delimiter")
 	}
-	fm := rest[:idx]
-	body := strings.TrimPrefix(rest[idx+len(closeDelim):], "\n")
+	body = strings.TrimPrefix(body, "\n")
 
 	var name, description string
-	for _, line := range strings.Split(fm, "\n") {
+	for line := range strings.SplitSeq(fm, "\n") {
 		if v, ok := strings.CutPrefix(line, "name: "); ok {
 			name = v
 		} else if v, ok := strings.CutPrefix(line, "description: "); ok {

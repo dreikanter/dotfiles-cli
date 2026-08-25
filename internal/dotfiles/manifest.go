@@ -4,9 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"os"
 	"path/filepath"
-	"sort"
+	"slices"
 	"strings"
 )
 
@@ -40,16 +41,12 @@ func LoadManifest(path string) (Manifest, error) {
 
 // Tools returns the manifest's tool names in deterministic order.
 func (m Manifest) Tools() []string {
-	out := make([]string, 0, len(m))
-	for k := range m {
-		out = append(out, k)
-	}
-	sort.Strings(out)
-	return out
+	return slices.Sorted(maps.Keys(m))
 }
 
-// expand resolves a leading "~" and trims the trailing directory marker.
-func expand(p, home string) string {
+// Expand resolves a manifest path to an absolute filesystem path. It expands
+// a leading "~" and strips any trailing directory marker.
+func Expand(p, home string) string {
 	p = strings.TrimRight(p, "/")
 	if p == "~" {
 		return home
@@ -64,12 +61,6 @@ func expand(p, home string) string {
 // the path as a directory via a trailing slash.
 func hasDirMarker(original string) bool {
 	return strings.HasSuffix(original, "/")
-}
-
-// Expand resolves a manifest path to an absolute filesystem path.
-// It expands a leading "~" and strips any trailing slash marker.
-func Expand(p, home string) string {
-	return expand(p, home)
 }
 
 // ManifestPath converts abs to the storage form used in dotfiles.json.

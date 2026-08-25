@@ -64,8 +64,7 @@ func Execute() {
 	if errors.Is(err, errSilent) {
 		os.Exit(1)
 	}
-	var ee *exec.ExitError
-	if errors.As(err, &ee) {
+	if ee, ok := errors.AsType[*exec.ExitError](err); ok {
 		os.Exit(ee.ExitCode())
 	}
 	if jsonOutput {

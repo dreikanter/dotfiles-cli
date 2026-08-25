@@ -409,7 +409,7 @@ func TestCLI_StatusShowsToolName(t *testing.T) {
 	out, err := runCLI(t, "--root", repo, "status")
 	require.NoError(t, err)
 	// The report row should include the tool name alongside the path.
-	for _, line := range strings.Split(out, "\n") {
+	for line := range strings.SplitSeq(out, "\n") {
 		if strings.Contains(line, ".gitconfig") {
 			assert.Contains(t, line, "git", "tool name should appear: %q", line)
 			return

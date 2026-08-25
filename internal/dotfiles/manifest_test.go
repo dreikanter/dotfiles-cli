@@ -92,7 +92,7 @@ func TestExpand(t *testing.T) {
 		{"/etc/hosts", "/etc/hosts"},
 	}
 	for _, c := range cases {
-		assert.Equal(t, c.want, expand(c.in, home), c.in)
+		assert.Equal(t, c.want, Expand(c.in, home), c.in)
 	}
 }
 
